@@ -791,10 +791,11 @@ void RefreshNews()
          gNews[n].digits=(int)ev.digits;
          gNews[n].hasActual=vals[i].HasActualValue();
          gNews[n].hasForecast=vals[i].HasForecastValue();
-         gNews[n].hasPrevious=vals[i].HasPreviousValue();
+         gNews[n].hasPrevious=vals[i].HasRevisedValue() || vals[i].HasPreviousValue();
          gNews[n].actual=gNews[n].hasActual ? vals[i].GetActualValue() : 0.0;
          gNews[n].forecast=gNews[n].hasForecast ? vals[i].GetForecastValue() : 0.0;
-         gNews[n].previous=gNews[n].hasPrevious ? vals[i].GetPreviousValue() : 0.0;
+         gNews[n].previous=vals[i].HasRevisedValue() ? vals[i].GetRevisedValue() :
+                           (vals[i].HasPreviousValue() ? vals[i].GetPreviousValue() : 0.0);
         }
      }
 
