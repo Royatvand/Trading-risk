@@ -173,6 +173,12 @@ int      gHeadlineCount=0;
 datetime gHeadlineLastRequest=0;
 bool     gHeadlineDataOK=false;
 string   gHeadlineStatus="Live headlines not loaded";
+
+// Forward declarations used by the Sessions & News module.
+void RefreshNews();
+void RefreshHeadlines(bool force);
+string NewsImportanceName(int importance);
+color NewsImportanceColor(int importance);
  
 //--- Independent dashboard modules. Each module has its own object prefix.
 //--- All modules share this EA's single timer and central chart-event dispatcher.
