@@ -152,7 +152,7 @@ void NC_CreatePanel()
    NC_Rect("header",x,y,NC_WIDTH,42,C_HEADER,C_HEADER);
    NC_Rect("line",x,y+42,NC_WIDTH,2,C_ACCENT,C_ACCENT);
    NC_Label("title",x+pad,y+11,"یادداشت و چک‌لیست معامله",C_TEXT,11);
-    NC_Button("btn_min",x+NC_WIDTH-38,y+9,26,24,"–",C_BTN,C_TEXT);
+   NC_Button("btn_min",x+NC_WIDTH-38,y+9,26,24,"–",C_BTN,C_TEXT);
 
    NC_Label("note_title",x+pad,y+55,"یادداشت سریع",C_ACCENT,9);
    NC_Edit("note_edit",x+pad,y+76,230,27,g_nc_note);
