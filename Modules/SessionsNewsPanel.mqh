@@ -11,6 +11,28 @@ input bool InpSN_ShowHeadlines = true;    // Show GDELT headlines section
 #define SN_HEIGHT 510
 #define SN_NEWS_ROWS 4
 #define SN_HEADLINE_ROWS 2
+bool g_sn_minimized=false;
+
+// Keep the title bar and its toggle visible while the panel is collapsed.
+void SN_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,SN_PREFIX)!=0) continue;
+      bool keep=(name==SN_PREFIX+"bg" || name==SN_PREFIX+"header" ||
+                 name==SN_PREFIX+"line" || name==SN_PREFIX+"title" ||
+                 name==SN_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_sn_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,SN_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,SN_PREFIX+"bg",OBJPROP_YSIZE,g_sn_minimized?44:SN_HEIGHT);
+   if(ObjectFind(0,SN_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,SN_PREFIX+"btn_min",OBJPROP_TEXT,g_sn_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 //--- UI helpers
 void SN_Rect(string id,int x,int y,int w,int h,color bg,color border)
@@ -260,7 +282,8 @@ void SN_CreatePanel()
    SN_Rect("header",x,y,SN_WIDTH,42,C_HEADER,C_HEADER);
    SN_Rect("line",x,y+42,SN_WIDTH,2,C_ACCENT,C_ACCENT);
    SN_Label("title",x+pad,y+11,"سشن‌ها و اخبار اقتصادی",C_TEXT,11,"Tahoma");
-   SN_Button("btn_news_refresh",x+SN_WIDTH-91,y+9,78,24,"تازه‌سازی خبر");
+   SN_Button("btn_news_refresh",x+SN_WIDTH-122,y+9,78,24,"تازه‌سازی خبر");
+   SN_Button("btn_min",x+SN_WIDTH-38,y+9,26,24,"–");
 
    SN_Label("sessions_title",x+pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma");
    SN_Rect("candle_chip",x+SN_WIDTH-160,y+50,147,24,C_CARD,C_BORDER);
@@ -369,6 +392,7 @@ bool SN_Init()
 {
    SN_CreatePanel();
    SN_UpdatePanel();
+   SN_ApplyMinimize();
    return true;
 }
 
@@ -381,7 +405,19 @@ void SN_Deinit()
 void SN_ChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
 {
    if(id!=CHARTEVENT_OBJECT_CLICK) return;
-   if(sparam==SN_PREFIX+"btn_news_refresh")
+   if(sparam==SN_PREFIX+"btn_min")
+
+   {
+
+      g_sn_minimized=!g_sn_minimized;
+
+      SN_ApplyMinimize();
+
+      ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+
+   }
+
+   else if(sparam==SN_PREFIX+"btn_news_refresh")
    {
       ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
       RefreshNews();
