@@ -183,8 +183,8 @@ color NewsImportanceColor(int importance);
 //--- Independent dashboard modules. Each module has its own object prefix.
 //--- All modules share this EA's single timer and central chart-event dispatcher.
 #include "Modules\\DrawPanelPro.mqh"
-#include "Modules\\CandleCloseCountdown.mqh"
 #include "Modules\\SessionsNewsPanel.mqh"
+#include "Modules\\CandleCloseCountdown.mqh"
 #include "Modules\\NotesChecklistPanel.mqh"
 
 
@@ -340,7 +340,7 @@ void BuildPanel()
    gCurTab=-2;
    int tw=(inner-9)/4;
    string tn[4]={"ACCOUNT","SETUP","TRADE","MANAGE"};
-   for(int k=0;k<5;k++)
+   for(int k=0;k<4;k++)
       Btn("tab_"+IntegerToString(k),x+pad+k*(tw+3),y+56,tw,26,tn[k],C_BTN,C_TEXT,8);
 
    // ---------------- status bar (moved by ApplyTab) ----------------
@@ -1759,16 +1759,18 @@ int OnInit()
       return(INIT_FAILED);
      }
 
+   SN_Init();
+
    if(CCT_Init()!=INIT_SUCCEEDED)
      {
       Print("Trading Dashboard: candle countdown initialization failed.");
+      SN_Deinit();
       DPP_Deinit(0);
       EventKillTimer();
       ObjectsDeleteAll(0,PFX);
       return(INIT_FAILED);
      }
 
-   SN_Init();
    NC_Init();
    UpdatePanel();
    CCT_Timer();
@@ -1780,8 +1782,8 @@ int OnInit()
 void OnDeinit(const int reason)
   {
    NC_Deinit();
-   SN_Deinit();
    CCT_Deinit(reason);
+   SN_Deinit();
    DPP_Deinit(reason);
    EventKillTimer();
    ObjectsDeleteAll(0,PFX);
