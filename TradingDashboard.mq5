@@ -285,7 +285,7 @@ void Btn(string name,int x,int y,int w,int h,string txt,color bg,color fg=C_TEXT
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,size);
    ObjectSetInteger(0,n,OBJPROP_COLOR,fg);
    ObjectSetInteger(0,n,OBJPROP_BGCOLOR,bg);
-   ObjectSetInteger(0,n,OBJPROP_BORDER_COLOR,bg);
+   ObjectSetInteger(0,n,OBJPROP_BORDER_COLOR,bg==C_BTN? C_BORDER:bg);
    ObjectSetInteger(0,n,OBJPROP_STATE,false);
    ObjectSetInteger(0,n,OBJPROP_SELECTABLE,false);
    ObjectSetInteger(0,n,OBJPROP_HIDDEN,true);
