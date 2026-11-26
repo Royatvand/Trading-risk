@@ -2137,6 +2137,7 @@ bool DragToolbar(int x, int y, int flags)
    g_tbCY = g_tbY;
    GlobalVariableSet("DPN_tbx", g_tbCX);
    GlobalVariableSet("DPN_tby", g_tbCY);
+   GlobalVariablesFlush();
    ChartSetInteger(0, CHART_MOUSE_SCROLL, g_prevScroll != 0);
    return false;
 }
@@ -5611,7 +5612,7 @@ void SMM_HandlePanelDrag(const int id,const long &lparam,
    {
       int chartW=(int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS);
       int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
-      int panelH=MathMax(48,gTabH[gTab]+28);
+      int panelH=gMin? 48 : MathMax(48,gTabH[gTab]+28);
       int nx=MathMax(0,MathMin(MathMax(0,chartW-PW),mx-gPanelDragDX));
       int ny=MathMax(0,MathMin(MathMax(0,chartH-panelH),my-gPanelDragDY));
       SMM_MovePanel(nx,ny);
@@ -7258,6 +7259,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
    SN_ChartEvent(id,lparam,dparam,sparam);
    NC_ChartEvent(id,lparam,dparam,sparam);
    SMM_HandlePanelDrag(id,lparam,dparam,sparam);
+   if(id==CHARTEVENT_CLICK) CM_UpdateMasterControl();
 
    if(id==CHARTEVENT_OBJECT_CLICK &&
       (sparam==SN_PREFIX+"btn_min" || sparam==NC_PREFIX+"btn_min" || sparam==UI+"tb"))
