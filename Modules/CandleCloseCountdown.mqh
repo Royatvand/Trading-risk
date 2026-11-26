@@ -5,19 +5,8 @@
 //| ChartMasters - Candle close countdown for MetaTrader 5          |
 //+------------------------------------------------------------------+
 
-input int   InpCCT_XDistance            = 18;                    // Distance from the right edge
-input int   InpCCT_YDistance            = 18;                    // Distance from the top edge
-input int   InpCCT_PanelWidth           = 285;                   // Panel width in pixels
-input int   InpCCT_PanelHeight          = 42;                    // Panel height in pixels
-input color InpCCT_PanelBackground      = C'30,41,59';           // Dark panel: readable on light and dark charts
-input color InpCCT_PanelBorder          = C'56,189,248';         // Cyan border for contrast
-input color InpCCT_TextColor            = clrWhite;              // Text color
-input int   InpCCT_FontSize             = 11;                    // Font size
-input string InpCCT_Font                = "Segoe UI Semibold";  // Font name
-input int   InpCCT_MaxTickAgeSeconds    = 300;                   // Hide countdown if no fresh quote for this many seconds
-
-string          g_cct_panel_name = "";
-string          g_cct_text_name  = "";
+input group "Candle countdown"
+input int InpCCT_MaxTickAgeSeconds = 300; // Suppress countdown when quote data is stale
 
 // Broker-time clock anchored to the latest quote, then advanced locally.
 // This keeps the countdown in the same time base as the chart candles.
@@ -205,52 +194,8 @@ bool CCT_GetBrokerClock(const string symbol,
 //+------------------------------------------------------------------+
 bool CCT_CreateCountdownObjects()
 {
-   if(ObjectFind(0, g_cct_panel_name) < 0)
-   {
-      if(!ObjectCreate(0, g_cct_panel_name, OBJ_RECTANGLE_LABEL, 0, 0, 0))
-      {
-         Print("ChartMasters: failed to create panel. Error: ", GetLastError());
-         return false;
-      }
-   }
-
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_CORNER, CORNER_RIGHT_UPPER);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_XDISTANCE, InpCCT_XDistance);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_YDISTANCE, InpCCT_YDistance);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_XSIZE, InpCCT_PanelWidth);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_YSIZE, InpCCT_PanelHeight);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_BGCOLOR, InpCCT_PanelBackground);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_COLOR, InpCCT_PanelBorder);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_WIDTH, 1);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_BACK, false);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_SELECTABLE, false);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_SELECTED, false);
-   ObjectSetInteger(0, g_cct_panel_name, OBJPROP_HIDDEN, true);
-
-   if(ObjectFind(0, g_cct_text_name) < 0)
-   {
-      if(!ObjectCreate(0, g_cct_text_name, OBJ_LABEL, 0, 0, 0))
-      {
-         Print("ChartMasters: failed to create text label. Error: ", GetLastError());
-         return false;
-      }
-   }
-
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_CORNER, CORNER_RIGHT_UPPER);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_ANCHOR, ANCHOR_RIGHT_UPPER);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_XDISTANCE, InpCCT_XDistance + 12);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_YDISTANCE, InpCCT_YDistance + 13);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_COLOR, InpCCT_TextColor);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_FONTSIZE, InpCCT_FontSize);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_SELECTABLE, false);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_SELECTED, false);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_HIDDEN, true);
-   ObjectSetInteger(0, g_cct_text_name, OBJPROP_BACK, false);
-   ObjectSetString(0, g_cct_text_name, OBJPROP_FONT, InpCCT_Font);
-   ObjectSetString(0, g_cct_text_name, OBJPROP_TEXT, "ChartMasters | Starting...");
-
-   return true;
+   // The countdown label is created by the Sessions & News panel.
+   return (ObjectFind(0,SN_PREFIX+"candle_timer")>=0);
 }
 
 //+------------------------------------------------------------------+
@@ -258,12 +203,11 @@ bool CCT_CreateCountdownObjects()
 //+------------------------------------------------------------------+
 void CCT_SetStatusText(const string text)
 {
-   if(ObjectFind(0, g_cct_panel_name) < 0 || ObjectFind(0, g_cct_text_name) < 0)
-      CCT_CreateCountdownObjects();
-
-   if(ObjectFind(0, g_cct_text_name) >= 0)
-      ObjectSetString(0, g_cct_text_name, OBJPROP_TEXT, text);
-
+   color status_color=C_ACCENT;
+   if(StringFind(text,"منتظر")>=0 || StringFind(text,"بسته")>=0 ||
+      StringFind(text,"همگام")>=0 || StringFind(text,"داده")>=0)
+      status_color=C_WARN;
+   SN_SetLabel("candle_timer",text,status_color);
    ChartRedraw(0);
 }
 
@@ -287,7 +231,7 @@ void CCT_UpdateCountdown()
    bool has_fresh_quote = CCT_GetBrokerClock(symbol, server_time, last_quote_time);
    if(server_time <= 0)
    {
-      CCT_SetStatusText(tf_label + "   |   WAITING FOR MARKET DATA");
+      CCT_SetStatusText(tf_label + "   |   منتظر داده بازار");
       return;
    }
 
@@ -297,7 +241,7 @@ void CCT_UpdateCountdown()
    // A known closed quote session means there is no active candle countdown.
    if(has_schedule && !session_open)
    {
-      CCT_SetStatusText(tf_label + "   |   MARKET CLOSED");
+      CCT_SetStatusText(tf_label + "   |   بازار بسته است");
       return;
    }
 
@@ -305,13 +249,13 @@ void CCT_UpdateCountdown()
    // timetable may still say "open". A stale quote suppresses the timer.
    if(!has_fresh_quote)
    {
-      CCT_SetStatusText(tf_label + "   |   NO LIVE MARKET DATA");
+      CCT_SetStatusText(tf_label + "   |   داده زنده بازار موجود نیست");
       return;
    }
    datetime bar_open_time = iTime(symbol, timeframe, 0);
    if(bar_open_time <= 0)
    {
-      CCT_SetStatusText(tf_label + "   |   WAITING FOR CANDLE DATA");
+      CCT_SetStatusText(tf_label + "   |   منتظر داده کندل");
       return;
    }
 
@@ -319,7 +263,7 @@ void CCT_UpdateCountdown()
    datetime bar_close_time = CCT_CurrentBarCloseTime(timeframe, bar_open_time);
    if(period_seconds <= 0 || bar_close_time <= 0)
    {
-      CCT_SetStatusText(tf_label + "   |   UNSUPPORTED TIMEFRAME");
+      CCT_SetStatusText(tf_label + "   |   تایم‌فریم پشتیبانی نمی‌شود");
       return;
    }
 
@@ -327,7 +271,7 @@ void CCT_UpdateCountdown()
    // never show a countdown longer than the selected candle period.
    if(server_time < bar_open_time)
    {
-      CCT_SetStatusText(tf_label + "   |   SYNCING CANDLE DATA");
+      CCT_SetStatusText(tf_label + "   |   در حال همگام‌سازی کندل");
       return;
    }
 
@@ -344,7 +288,7 @@ void CCT_UpdateCountdown()
 
       if(bar_close_time <= 0 || server_time >= bar_close_time)
       {
-         CCT_SetStatusText(tf_label + "   |   WAITING FOR NEW CANDLE");
+         CCT_SetStatusText(tf_label + "   |   منتظر کندل جدید");
          return;
       }
    }
@@ -354,13 +298,11 @@ void CCT_UpdateCountdown()
       remaining_seconds = 0;
    if(remaining_seconds > period_seconds)
    {
-      CCT_SetStatusText(tf_label + "   |   SYNCING CANDLE DATA");
+      CCT_SetStatusText(tf_label + "   |   در حال همگام‌سازی کندل");
       return;
    }
 
-   string display_text = StringFormat("%s   |   CLOSES IN   %s",
-                                      tf_label,
-                                      CCT_FormatCountdown(remaining_seconds));
+   string display_text = "کندل "+tf_label+"  |  بسته‌شدن در "+CCT_FormatCountdown(remaining_seconds);
    CCT_SetStatusText(display_text);
 }
 
@@ -369,14 +311,11 @@ void CCT_UpdateCountdown()
 //+------------------------------------------------------------------+
 int CCT_Init()
 {
-   string unique_id = IntegerToString(ChartID()) + "_" + IntegerToString(GetTickCount());
-   g_cct_panel_name = "CM_CandleCountdown_Panel_" + unique_id;
-   g_cct_text_name  = "CM_CandleCountdown_Text_" + unique_id;
-
    if(!CCT_CreateCountdownObjects())
+   {
+      Print("ChartMasters: countdown label is missing from Sessions & News panel.");
       return INIT_FAILED;
-
-   // Uses the Expert Advisor's centralized millisecond timer.
+   }
    CCT_UpdateCountdown();
    return INIT_SUCCEEDED;
 }
@@ -386,9 +325,7 @@ int CCT_Init()
 //+------------------------------------------------------------------+
 void CCT_Deinit(const int reason)
 {
-
-   ObjectDelete(0, g_cct_text_name);
-   ObjectDelete(0, g_cct_panel_name);
+   // The countdown label belongs to Sessions & News and is removed there.
 }
 
 //+------------------------------------------------------------------+
