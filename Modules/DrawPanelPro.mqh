@@ -45,7 +45,7 @@ uint ICON_DATA[16128] = {
 0x03FFFFFF,0x00000000,0x7AE1E5EC,0xFFEDF2FA,0xFFE8ECF4,0xFBE4E8F1,0xDDE2E6ED,0xC2E2E6ED,0xC3E2E6EE,0xC2E2E6ED,0xC2E2E6ED,0xF0E2E6EE,
 0xFEE1E5ED,0xC5E2E6EE,0xC2E2E6ED,0xC3E2E6EE,0xC2E2E6ED,0xDDE2E6ED,0xFBE4E8F1,0xFFE8ECF4,0xFFEFF3FB,0x93E1E4ED,0x00000000,0x02FFFFFF,
 0x03FFFFFF,0x00000000,0x8EE0E5ED,0xFFF5F9FF,0xFFE7EBF3,0xFBE1E5ED,0xFBE1E5ED,0xFBE2E6EE,0xFBE2E6EE,0xFBE2E6EE,0xFBE2E6EE,0xFEE1E5ED,
-0xFFE2E6EE,0xFCE1E5ED,0xFBE2E6EE,0xFCE1E5ED,0xFBE2E6EE,0xFBE1E5ED,0xFBE1E5ED,0xFFE6EAF2,0xFFF5FAFF,0xABE2E5ED,0x00000000,0x02FFFFFF,
+0xFFE2E6EE,0xFCE1E5ED,0xFBE2E6EE,0xFCE1E5ED,0xFBE2E6EE,0xFBE1E5ED,0xFBE1E5ED,0xFFE6EDF5,0xFFF5FAFF,0xABE2E5ED,0x00000000,0x02FFFFFF,
 0x00000000,0x01FFFFFF,0x00000000,0x4DE1E7EE,0xC8E8EBF3,0xFFFFFFFF,0xBDE2E6EE,0x0EECECEC,0x11E1E1F0,0x10DFEFEF,0x0EECECEC,0xC5E2E6EE,
 0xFBE2E6EE,0x1BECECEC,0x0EECECEC,0x12E2E2F0,0x0EECECEC,0xBDE2E6EE,0xFFFFFFFF,0xD1E6EAF2,0x52E6ECF2,0x00000000,0x01FFFFFF,0x01FFFFFF,
 0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x03AAAAAA,0x8CEAEEF4,0x49E3E6ED,0x00000000,0x00000000,0x00000000,0x00000000,0xC1E1E5ED,
@@ -812,8 +812,8 @@ uint ICON_DATA[16128] = {
 0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x19E0D6E0,0xF4E0EBF5,0xFFE4F4FF,0xFEE1ECF6,0x28E5DFEB,0x00000000,0x02FFFFFF,0x00000000,
 0x00000000,0x01FFFFFF,0x00000000,0x1BE2ECF5,0xF6E1E4EB,0xFFE4E6ED,0xFEE3E6ED,0x2DE2E2EE,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
 0x00000000,0x00000000,0x02FFFFFF,0x00000000,0x2EE3E8F3,0xFFE4E7EE,0xFFE4E5EC,0xF9E2E4EB,0x1FE6E6F6,0x00000000,0x02FFFFFF,0x00000000,
-0x00000000,0x00000000,0x00000000,0x03AAAAAA,0xDBE1E6ED,0xFFE6EAF2,0xFFEEF2FB,0x4EE1E4EB,0x02FFFFFF,0x04FFFFFF,0x00000000,0x00000000,
-0x00000000,0x00000000,0x04FFFFFF,0x02FFFFFF,0x4DE1E4EE,0xFFEEF2FA,0xFFE6EAF2,0xDCE2E5ED,0x03FFFFFF,0x00000000,0x00000000,0x00000000,
+0x00000000,0x00000000,0x00000000,0x03AAAAAA,0xDBE1E6ED,0xFFE6EDF5,0xFFEEF2FB,0x4EE1E4EB,0x02FFFFFF,0x04FFFFFF,0x00000000,0x00000000,
+0x00000000,0x00000000,0x04FFFFFF,0x02FFFFFF,0x4DE1E4EE,0xFFEEF2FA,0xFFE6EDF5,0xDCE2E5ED,0x03FFFFFF,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x03FFFFFF,0x00000000,0xA3E2E7EF,0xFDEEF2FB,0xFFEBEFF8,0xACE2E5EE,0x00000000,0x05CCCCFF,0x04BFBFBF,0x027F7FFF,
 0x027F7F7F,0x04BFBFBF,0x04FFFFFF,0x00000000,0xACE2E5EE,0xFFEBEFF8,0xFDEEF2FB,0xA3E2E7EF,0x00000000,0x03FFFFFF,0x00000000,0x00000000,
 0x00000000,0x00000000,0x03FFFFFF,0x00000000,0x3FE2E6EE,0xFFF1F5FD,0xF9E2E6ED,0xFFEDF1FA,0x73E4E8F1,0x00000000,0x00000000,0x00000000,
@@ -869,7 +869,7 @@ uint ICON_DATA[16128] = {
 0x00000000,0x00000000,0x00000000,0x03AAAAFF,0x00000000,0xABE1E5ED,0xFFF2F6FF,0xFAE1E5EC,0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,
 0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,0xFBE1E5ED,0xFFEEF2FA,0xC9E0E5ED,0x01FFFFFF,0x02FFFFFF,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x02FFFFFF,0x027F7F7F,0x1CE3E3F5,0xEDE6EAF2,0xFFEBEFF7,0xFAE1E5ED,0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,
-0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,0xFBE1E5ED,0xFFE6EAF2,0xFAE9EDF5,0x30E4E4EF,0x00000000,0x03AAAAAA,0x00000000,0x00000000,0x00000000,
+0xFFE2E6EE,0xFFE2E6EE,0xFFE2E6EE,0xFBE1E5ED,0xFFE6EDF5,0xFAE9EDF5,0x30E4E4EF,0x00000000,0x03AAAAAA,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x00000000,0x02FFFFFF,0x00000000,0x3EDEE2EA,0xEDEAEEF6,0xFFF0F4FD,0xFEE0E4EC,0xFBE1E5ED,0xFBE2E6ED,
 0xFBE2E6ED,0xFBE1E5ED,0xFDE1E5ED,0xFFEEF2FA,0xF8EBEFF7,0x57DEE1EA,0x00000000,0x03AAAAFF,0x00000000,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x03AAAAFF,0x00000000,0x25D5DCE3,0xB5E8ECF5,0xFFE8ECF4,0xFFF2F7FF,0xFFF1F5FE,
@@ -1003,21 +1003,21 @@ uint ICON_DATA[16128] = {
 0x00000000,0x00000000,0x00000000,0x01FFFFFF,0x01FFFFFF,0x12E2E2F0,0x84E7EDF5,0xFEE7EBF4,0xEDE1E6ED,0x80E3E7EF,0x7FE2E6EE,0x80E1E5ED,
 0x80E1E5ED,0x80E3E7EF,0x80E3E7EF,0xDEE2E5ED,0xFEEDF1F7,0x97E9ECF4,0x1DE4E4ED,0x00000000,0x01FFFFFF,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x02FFFFFF,0x02FFFFFF,0xBEE1E5ED,0xFFFAFEFF,0xFCE1E5ED,0xFFE4E8F0,0xFFF3F7FF,0xFFF3F7FF,0xFFF0F5FD,
-0xFFF0F4FD,0xFFF2F7FF,0xFFF3F7FF,0xFFE6EAF2,0xFDE0E4EC,0xFFF6FAFF,0xD8E2E6EE,0x0CD4D4E9,0x01FFFFFF,0x01FFFFFF,0x00000000,0x00000000,
+0xFFF0F4FD,0xFFF2F7FF,0xFFF3F7FF,0xFFE6EDF5,0xFDE0E4EC,0xFFF6FAFF,0xD8E2E6EE,0x0CD4D4E9,0x01FFFFFF,0x01FFFFFF,0x00000000,0x00000000,
 0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xF3E2E6EE,0xFCE5E8F0,0xFEE1E5ED,0xFEE1E5ED,0xFBE1E5ED,0xFBE0E4EC,0xFBEBEFF7,
-0xFBEDF1F9,0xFBE1E5EC,0xFBE1E5ED,0xFEE1E5ED,0xFEE3E7EE,0xFCE0E4ED,0xFFE6EAF2,0x28E5E5F2,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
-0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEDE1E6ED,0xFFE6EAF2,0xFEE1E5ED,0xFFE2E6EE,0xFFE1E5ED,0xFFE9EDF5,0xFFAEB2BA,
+0xFBEDF1F9,0xFBE1E5EC,0xFBE1E5ED,0xFEE1E5ED,0xFEE3E7EE,0xFCE0E4ED,0xFFE6EDF5,0x28E5E5F2,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
+0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEDE1E6ED,0xFFE6EDF5,0xFEE1E5ED,0xFFE2E6EE,0xFFE1E5ED,0xFFE9EDF5,0xFFAEB2BA,
 0xFFA5A9B1,0xFFE7EBF3,0xFFE2E6EE,0xFFE2E6EE,0xFEE2E6EE,0xFFE2E6EF,0xFEE1E5ED,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
-0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEEE2E6ED,0xFFE6EAF2,0xFEE1E5ED,0xFFE0E4EC,0xFFEDF1F9,0xFFA4A8B0,0xFF0F131B,
+0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEEE2E6ED,0xFFE6EDF5,0xFEE1E5ED,0xFFE0E4EC,0xFFEDF1F9,0xFFA4A8B0,0xFF0F131B,
 0xFF080C14,0xFF8D9199,0xFFEEF2FA,0xFFDFE3EB,0xFEE2E6EE,0xFFE2E6EF,0xFFE2E6EE,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
-0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEEE2E6ED,0xFFE6EAF2,0xFEE1E5ED,0xFFDFE3EB,0xFFF1F5FD,0xFF83878F,0xFF01050D,
+0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEEE2E6ED,0xFFE6EDF5,0xFEE1E5ED,0xFFDFE3EB,0xFFF1F5FD,0xFF83878F,0xFF01050D,
 0xFF02060E,0xFF686C74,0xFFF1F5FD,0xFFDFE3EB,0xFEE2E6EE,0xFFE2E6EF,0xFFE2E6EE,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
-0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEEE2E6ED,0xFFE6EAF2,0xFEE1E5ED,0xFFE1E5ED,0xFFE4E8F0,0xFFDCE0E8,0xFF666A72,
-0xFF595D65,0xFFD2D6DE,0xFFE6EAF2,0xFFE1E5ED,0xFEE2E6EE,0xFFE2E6EF,0xFFE2E6EE,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
-0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEDE1E6ED,0xFFE6EAF2,0xFEE1E5ED,0xFFE2E6EE,0xFFE1E5ED,0xFFE5E9F1,0xFFEEF2FA,
-0xFFEEF2FA,0xFFE6EAF2,0xFFE1E5ED,0xFFE2E6EE,0xFEE2E6EE,0xFFE2E6EF,0xFEE1E5ED,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
+0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEEE2E6ED,0xFFE6EDF5,0xFEE1E5ED,0xFFE1E5ED,0xFFE4E8F0,0xFFDCE0E8,0xFF666A72,
+0xFF595D65,0xFFD2D6DE,0xFFE6EDF5,0xFFE1E5ED,0xFEE2E6EE,0xFFE2E6EF,0xFFE2E6EE,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
+0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x11E1E1F0,0xEDE1E6ED,0xFFE6EDF5,0xFEE1E5ED,0xFFE2E6EE,0xFFE1E5ED,0xFFE5E9F1,0xFFEEF2FA,
+0xFFEEF2FA,0xFFE6EDF5,0xFFE1E5ED,0xFFE2E6EE,0xFEE2E6EE,0xFFE2E6EF,0xFEE1E5ED,0x27E4E4F1,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
 0x00000000,0x00000000,0x01FFFFFF,0x00000000,0x12E2E2F0,0xF2E1E5EE,0xFBE5E9F0,0xFAE2E6EE,0xFBE2E5ED,0xFBE2E6EE,0xFBE1E5ED,0xFBDFE3EB,
-0xFBDFE3EB,0xFBE0E4EC,0xFBE2E6EE,0xFBE2E5ED,0xFAE3E7EF,0xFBE0E4ED,0xFFE6EAF2,0x29E6E6F2,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
+0xFBDFE3EB,0xFBE0E4EC,0xFBE2E6EE,0xFBE2E5ED,0xFAE3E7EF,0xFBE0E4ED,0xFFE6EDF5,0x29E6E6F2,0x00000000,0x02FFFFFF,0x00000000,0x00000000,
 0x00000000,0x00000000,0x01000000,0x01FFFFFF,0x04FFFFFF,0xCFE1E6ED,0xFFFCFFFF,0xFFEFF3FC,0xFFF1F6FE,0xFFF1F6FE,0xFFF1F6FE,0xFFF1F6FE,
 0xFFF1F5FE,0xFFF1F6FE,0xFFF1F6FE,0xFFF1F6FE,0xFFF0F4FC,0xFFF9FDFF,0xDFE2E6ED,0x0EECECEC,0x01FFFFFF,0x01FFFFFF,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x027F7FFF,0x00000000,0x22E1E8F0,0x91E9EFF6,0x9EE6EAF2,0x9FE2E5ED,0x9FE2E6EE,0x9FE2E6EE,0x9FE2E6EE,
@@ -1596,7 +1596,7 @@ void MakeBtn(string id, string text, int w, int h, color bg, color fg, string ti
    ObjectSetString(0, name, OBJPROP_FONT, FONT_UI);
    ObjectSetInteger(0, name, OBJPROP_COLOR, fg);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
-   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C'70,70,90');
+   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, fs);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
@@ -1621,7 +1621,7 @@ void MakeRectUI(string id, color bg)
    if(ObjectFind(0, name) < 0) ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
    ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
-   ObjectSetInteger(0, name, OBJPROP_COLOR, C'70,70,90');
+   ObjectSetInteger(0, name, OBJPROP_COLOR, C_BORDER);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
 }
@@ -1643,9 +1643,9 @@ void CreateUI()
    ObjectSetInteger(0, tip, OBJPROP_READONLY, true);
    ObjectSetInteger(0, tip, OBJPROP_XSIZE, 120);
    ObjectSetInteger(0, tip, OBJPROP_YSIZE, 20);
-   ObjectSetInteger(0, tip, OBJPROP_COLOR, clrWhite);
-   ObjectSetInteger(0, tip, OBJPROP_BGCOLOR, C'20,24,32');
-   ObjectSetInteger(0, tip, OBJPROP_BORDER_COLOR, C'70,70,90');
+   ObjectSetInteger(0, tip, OBJPROP_COLOR, C_TEXT);
+   ObjectSetInteger(0, tip, OBJPROP_BGCOLOR, C_CARD);
+   ObjectSetInteger(0, tip, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetString(0, tip, OBJPROP_FONT, "Segoe UI");
    ObjectSetInteger(0, tip, OBJPROP_FONTSIZE, 8);
    ObjectSetInteger(0, tip, OBJPROP_ALIGN, ALIGN_CENTER);
@@ -1654,27 +1654,28 @@ void CreateUI()
    ObjectSetInteger(0, tip, OBJPROP_TIMEFRAMES, OBJ_NO_PERIODS);
 
    // floating edit bar
-   MakeRectUI("fb_bg", C'30,30,44');
+   MakeRectUI("fb_bg", C_HEADER);
    MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, clrWhite, "Color", 10);
-   MakeBtn("fb_wid",  "2px", 44, 24, C'40,40,56', clrWhite, "Line width", 9);
-   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C'40,40,56', clrWhite, "Line style", 10);
+   MakeBtn("fb_wid",  "2px", 44, 24, C_BTN, clrWhite, "Line width", 9);
+   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C_BTN, clrWhite, "Line style", 10);
    string te = UI + "fb_txt";
    if(ObjectFind(0, te) < 0) ObjectCreate(0, te, OBJ_EDIT, 0, 0, 0);
    ObjectSetInteger(0, te, OBJPROP_XSIZE, 92);
    ObjectSetInteger(0, te, OBJPROP_YSIZE, 24);
    ObjectSetString(0, te, OBJPROP_TEXT, "");
-   ObjectSetInteger(0, te, OBJPROP_COLOR, clrBlack);
-   ObjectSetInteger(0, te, OBJPROP_BGCOLOR, clrWhite);
+   ObjectSetInteger(0, te, OBJPROP_COLOR, C_TEXT);
+   ObjectSetInteger(0, te, OBJPROP_BGCOLOR, C_CARD);
+   ObjectSetInteger(0, te, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetInteger(0, te, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, te, OBJPROP_HIDDEN, true);
    ObjectSetString(0, te, OBJPROP_TOOLTIP, "Text on the line / text object (press Enter)");
-   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C'40,40,56', clrWhite, "Fill on/off (box)", 10);
-   MakeBtn("fb_tf",   "TF", 28, 24, C'40,40,56', clrWhite, "Show only on this timeframe (toggle)", 9);
-   MakeBtn("fb_lock", "LCK", 34, 24, C'40,40,56', clrWhite, "Lock", 8);
-   MakeBtn("fb_del",  "DEL", 34, 24, C'110,40,40', clrWhite, "Delete", 8);
+   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C_BTN, clrWhite, "Fill on/off (box)", 10);
+   MakeBtn("fb_tf",   "TF", 28, 24, C_BTN, clrWhite, "Show only on this timeframe (toggle)", 9);
+   MakeBtn("fb_lock", "LCK", 34, 24, C_BTN, clrWhite, "Lock", 8);
+   MakeBtn("fb_del",  "DEL", 34, 24, C_DANGER_BG, C_SELL, "Delete", 8);
 
    // palette popup
-   MakeRectUI("pal_bg", C'30,30,44');
+   MakeRectUI("pal_bg", C_HEADER);
    for(int i = 0; i < 8; i++)
       MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], clrWhite, "Color", 8);
 
@@ -1764,13 +1765,13 @@ void RenderToolbar()
 
    if(g_tbMin)
    {
-      FillRR(w, h, 0, 0, w, h, 7.0, 0x3A4150, 200);
-      FillRR(w, h, 1, 1, w - 2, h - 2, 6.0, 0x161A22, 240);
+      FillRR(w, h, 0, 0, w, h, 7.0, CM_RGB_BORDER, 200);
+      FillRR(w, h, 1, 1, w - 2, h - 2, 6.0, CM_RGB_BG, 240);
       for(int gr = 0; gr < 3; gr++)
          for(int gc = 0; gc < 2; gc++)
-            FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF7A8296);
-      FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EAF2, 255);
-      FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EAF2, 255);
+            FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF8B9AAF);
+      FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EDF5, 255);
+      FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EDF5, 255);
 
       g_tbIdx = 1 - g_tbIdx;
       string miniRes = "::dp_tb" + IntegerToString(g_tbIdx);
@@ -1778,13 +1779,13 @@ void RenderToolbar()
       ObjectSetString(0, UI + "tb", OBJPROP_BMPFILE, miniRes);
       return;
    }
-   FillRR(w, h, 0, 0, w, h, 11.0, 0x3A4150, 200);          // thin border
-   FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, 0x161A22, 240);  // body
+   FillRR(w, h, 0, 0, w, h, 11.0, CM_RGB_BORDER, 200);          // thin border
+   FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, CM_RGB_BG, 240);  // body
 
    // drag handle (six dots)
    for(int gr = 0; gr < 3; gr++)
       for(int gc = 0; gc < 2; gc++)
-         FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 6.0, 1.5, 0xFF7A8296);
+         FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 6.0, 1.5, 0xFF8B9AAF);
 
    int n = ArraySize(I_id);
    for(int i = 0; i < n; i++)
@@ -1792,12 +1793,12 @@ void RenderToolbar()
       int cx = PADT + GRIP + (i % g_tbCols) * (CELL + CGAP);
       int cy = PADT + (i / g_tbCols) * (CELL + CGAP);
       bool act = ItemActive(i), hov = (i == g_hover);
-      if(act)      FillRR(w, h, cx, cy, CELL, CELL, 8.0, 0x2F6BFF, 255);
-      else if(hov) FillRR(w, h, cx, cy, CELL, CELL, 8.0, 0x2E3542, 255);
+      if(act)      FillRR(w, h, cx, cy, CELL, CELL, 8.0, CM_RGB_ACCENT_SOFT, 255);
+      else if(hov) FillRR(w, h, cx, cy, CELL, CELL, 8.0, CM_RGB_HOVER, 255);
 
       if(I_id[i] == "col")
       {
-         FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 9.5, 0xFFE6EAF2);
+         FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 9.5, 0xFFE6EDF5);
          FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 7.5, (uint)ColorToARGB(g_color, 255));
       }
       else
@@ -1814,13 +1815,13 @@ void RenderToolbar()
             }
       }
       if(i == 14 && (i % g_tbCols) > 0)    // separator between tools and actions
-         FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, 0x4A5264, 255);
+         FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, CM_RGB_BORDER, 255);
    }
 
    // Dedicated minimize control at the right edge of the toolbar.
    int minX = w - 19, minY = (h - 14) / 2;
-   FillRR(w, h, minX, minY, 14, 14, 4.0, 0x2E3542, 255);
-   FillRR(w, h, minX + 3, minY + 6, 8, 2, 0.5, 0xFFE6EAF2, 255);
+   FillRR(w, h, minX, minY, 14, 14, 4.0, CM_RGB_HOVER, 255);
+   FillRR(w, h, minX + 3, minY + 6, 8, 2, 0.5, 0xFFE6EDF5, 255);
 
    g_tbIdx = 1 - g_tbIdx;
    string res = "::dp_tb" + IntegerToString(g_tbIdx);
@@ -3123,37 +3124,37 @@ void MkBtnLs(string id, string text, int w, int h, color bg, color fg, string ti
 void CreateList()
 {
    ArrayResize(g_lsIds, 0);
-   MakeRectUI("ls_bg", C'20,22,32');
+   MakeRectUI("ls_bg", C_BG);
    LsAdd("ls_bg");
-   MkLabelUI("ls_title", "OBJECTS", clrWhite, 9);
-   MkBtnLs("ls_close", "x", 20, 18, C'30,30,46', clrTomato, "Close");
-   MkLabelUI("ls_hint", "", clrGray, 7);
-   MkBtnLs("ls_auto", "", LSW - 16, 22, C'30,40,90', clrWhite, "Convert native MT5 drawings (default names) to panel style");
-   MkLabelUI("ls_sel", "SELECTED: 0", clrWhite, 8);
-   MkBtnLs("ls_only", "Only", 158, 22, C'30,40,90', clrWhite, "Show selected only on this timeframe");
-   MkBtnLs("ls_alltf", "All TFs", 158, 22, C'40,40,56', clrWhite, "Show selected on all timeframes");
-   MkBtnLs("ls_style", "Apply line style", 104, 22, C'40,40,56', clrWhite, "Apply current color / width / style to the selected");
-   MkBtnLs("ls_delsel", "Delete selected", 104, 22, C'40,40,56', clrTomato, "Delete the selected");
-   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C'40,40,56', clrWhite, "Clear selection");
+   MkLabelUI("ls_title", "OBJECTS", C_TEXT, 9);
+   MkBtnLs("ls_close", "x", 20, 18, C_DANGER_BG, C_SELL, "Close");
+   MkLabelUI("ls_hint", "", C_MUTED, 7);
+   MkBtnLs("ls_auto", "", LSW - 16, 22, C_ACCENT_SOFT, clrWhite, "Convert native MT5 drawings (default names) to panel style");
+   MkLabelUI("ls_sel", "SELECTED: 0", C_TEXT, 8);
+   MkBtnLs("ls_only", "Only", 158, 22, C_ACCENT_SOFT, clrWhite, "Show selected only on this timeframe");
+   MkBtnLs("ls_alltf", "All TFs", 158, 22, C_BTN, clrWhite, "Show selected on all timeframes");
+   MkBtnLs("ls_style", "Apply line style", 104, 22, C_BTN, clrWhite, "Apply current color / width / style to the selected");
+   MkBtnLs("ls_delsel", "Delete selected", 104, 22, C_DANGER_BG, C_SELL, "Delete the selected");
+   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C_BTN, clrWhite, "Clear selection");
 
    for(int r = 0; r < InpListRows; r++)
    {
       string k = IntegerToString(r);
-      MkBtnLs("ls_c" + k, "", 20, 20, C'40,40,56', clrWhite, "Select");
+      MkBtnLs("ls_c" + k, "", 20, 20, C_BTN, clrWhite, "Select");
       MakeRectUI("ls_k" + k, clrDodgerBlue);
       LsAdd("ls_k" + k);
-      MkBtnLs("ls_n" + k, "", 148, 20, C'30,32,46', clrWhite, "Click to select on chart");
-      MkBtnLs("ls_t" + k, "", 46, 20, C'40,40,56', clrWhite, "Only on this timeframe");
-      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C'40,40,56', clrWhite, "All timeframes");
-      MkBtnLs("ls_x" + k, "x", 22, 20, C'30,32,46', clrTomato, "Delete");
+      MkBtnLs("ls_n" + k, "", 148, 20, C_CARD, clrWhite, "Click to select on chart");
+      MkBtnLs("ls_t" + k, "", 46, 20, C_BTN, clrWhite, "Only on this timeframe");
+      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C_BTN, clrWhite, "All timeframes");
+      MkBtnLs("ls_x" + k, "x", 22, 20, C_DANGER_BG, C_SELL, "Delete");
    }
 
-   MkBtnLs("ls_prev", "<", 26, 22, C'40,40,56', clrWhite, "Previous page");
-   MkBtnLs("ls_next", ">", 26, 22, C'40,40,56', clrWhite, "Next page");
-   MkLabelUI("ls_page", "Page 1 / 1", clrSilver, 8);
-   MkBtnLs("ls_all", "All", 34, 22, C'40,40,56', clrWhite, "Select all");
-   MkBtnLs("ls_none", "None", 44, 22, C'40,40,56', clrWhite, "Select none");
-   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C'40,40,56', clrWhite, "Make every drawing visible on all timeframes");
+   MkBtnLs("ls_prev", "<", 26, 22, C_BTN, clrWhite, "Previous page");
+   MkBtnLs("ls_next", ">", 26, 22, C_BTN, clrWhite, "Next page");
+   MkLabelUI("ls_page", "Page 1 / 1", C_MUTED, 8);
+   MkBtnLs("ls_all", "All", 34, 22, C_BTN, clrWhite, "Select all");
+   MkBtnLs("ls_none", "None", 44, 22, C_BTN, clrWhite, "Select none");
+   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C_BTN, clrWhite, "Make every drawing visible on all timeframes");
    ShowList(false);
 }
 
@@ -3239,7 +3240,7 @@ void RefreshList()
    ObjectSetString(0, UI + "ls_title", OBJPROP_TEXT, "OBJECTS  (" + IntegerToString(n) + ")");
    ObjectSetString(0, UI + "ls_hint", OBJPROP_TEXT, "Chart: " + TfName() + "    Tick a row to select");
    ObjectSetString(0, UI + "ls_auto", OBJPROP_TEXT, "Auto-convert new MT5 drawings to panel style: " + (g_lsAuto ? "ON" : "OFF"));
-   ObjectSetInteger(0, UI + "ls_auto", OBJPROP_BGCOLOR, g_lsAuto ? C'30,50,120' : C'40,40,56');
+   ObjectSetInteger(0, UI + "ls_auto", OBJPROP_BGCOLOR, g_lsAuto ? C_ACCENT_SOFT : C_BTN);
    ObjectSetString(0, UI + "ls_sel", OBJPROP_TEXT, "SELECTED: " + IntegerToString(ArraySize(g_lsSel)));
    ObjectSetString(0, UI + "ls_only", OBJPROP_TEXT, "Only " + TfName());
    ObjectSetString(0, UI + "ls_page", OBJPROP_TEXT, "Page " + IntegerToString(g_lsPage + 1) + " / " + IntegerToString(pages));
@@ -3257,12 +3258,12 @@ void RefreshList()
       bool sel = InList(g_lsSel, rep);
       long tfv = ObjectGetInteger(0, rep, OBJPROP_TIMEFRAMES);
       ObjectSetString(0, UI + "ls_c" + k, OBJPROP_TEXT, sel ? Sym(0x2713) : "");
-      ObjectSetInteger(0, UI + "ls_c" + k, OBJPROP_BGCOLOR, sel ? C'30,80,220' : C'40,40,56');
+      ObjectSetInteger(0, UI + "ls_c" + k, OBJPROP_BGCOLOR, sel ? C_ACCENT_SOFT : C_BTN);
       ObjectSetInteger(0, UI + "ls_k" + k, OBJPROP_BGCOLOR, (color)ObjectGetInteger(0, rep, OBJPROP_COLOR));
       ObjectSetString(0, UI + "ls_n" + k, OBJPROP_TEXT, EntryTitle(rep));
       ObjectSetString(0, UI + "ls_t" + k, OBJPROP_TEXT, TfName());
-      ObjectSetInteger(0, UI + "ls_t" + k, OBJPROP_BGCOLOR, (tfv == TfFlag()) ? C'30,80,220' : C'40,40,56');
-      ObjectSetInteger(0, UI + "ls_a" + k, OBJPROP_BGCOLOR, (tfv == OBJ_ALL_PERIODS) ? C'30,80,220' : C'40,40,56');
+      ObjectSetInteger(0, UI + "ls_t" + k, OBJPROP_BGCOLOR, (tfv == TfFlag()) ? C_ACCENT_SOFT : C_BTN);
+      ObjectSetInteger(0, UI + "ls_a" + k, OBJPROP_BGCOLOR, (tfv == OBJ_ALL_PERIODS) ? C_ACCENT_SOFT : C_BTN);
    }
    g_lsSig = ListSig(ent);
    ChartRedraw(0);
