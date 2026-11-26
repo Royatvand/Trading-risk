@@ -205,7 +205,8 @@ void CCT_SetStatusText(const string text)
 {
    color status_color=C_ACCENT;
    if(StringFind(text,"منتظر")>=0 || StringFind(text,"بسته")>=0 ||
-      StringFind(text,"همگام")>=0 || StringFind(text,"داده")>=0)
+      StringFind(text,"همگام")>=0 || StringFind(text,"داده")>=0 ||
+      StringFind(text,"پشتیبانی")>=0)
       status_color=C_WARN;
    SN_SetLabel("candle_timer",text,status_color);
    ChartRedraw(0);
@@ -307,7 +308,7 @@ void CCT_UpdateCountdown()
 }
 
 //+------------------------------------------------------------------+
-//| Indicator initialization                                         |
+//| Countdown module initialization                                         |
 //+------------------------------------------------------------------+
 int CCT_Init()
 {
@@ -321,7 +322,7 @@ int CCT_Init()
 }
 
 //+------------------------------------------------------------------+
-//| Indicator deinitialization                                       |
+//| Countdown module cleanup                                       |
 //+------------------------------------------------------------------+
 void CCT_Deinit(const int reason)
 {
