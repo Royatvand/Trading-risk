@@ -8,7 +8,7 @@ input bool InpSN_ShowHeadlines = true;    // Show GDELT headlines section
 
 #define SN_PREFIX "CM_SN_"
 #define SN_WIDTH 365
-#define SN_HEIGHT 478
+#define SN_HEIGHT 510
 #define SN_NEWS_ROWS 4
 #define SN_HEADLINE_ROWS 2
 
@@ -246,6 +246,13 @@ string SN_ImportancePersian(int importance)
    return "نامشخص";
 }
 
+string SN_FormatCalendarValue(bool available,double value,int digits)
+{
+   if(!available) return "-";
+   int precision=MathMax(0,MathMin(8,digits));
+   return DoubleToString(value,precision);
+}
+
 void SN_CreatePanel()
 {
    int x=InpSN_X, y=InpSN_Y, pad=13;
@@ -270,23 +277,24 @@ void SN_CreatePanel()
    SN_Label("calendar_title",x+pad,y+180,"تقویم اقتصادی",C_ACCENT,9,"Tahoma");
    SN_Button("btn_headline_refresh",x+SN_WIDTH-91,y+175,78,23,"تیترهای جدید");
    SN_Label("calendar_status",x+pad,y+202,"در حال دریافت اطلاعات تقویم...",C_MUTED,8,"Tahoma");
-   SN_Rect("news_card",x+pad-4,y+222,SN_WIDTH-2*pad+8,151,C_CARD,C_BORDER);
+   SN_Rect("news_card",x+pad-4,y+222,SN_WIDTH-2*pad+8,184,C_CARD,C_BORDER);
    for(int i=0;i<SN_NEWS_ROWS;i++)
    {
-      int row_y=y+229+i*36;
+      int row_y=y+229+i*42;
       SN_Label("news_meta_"+IntegerToString(i),x+pad+4,row_y,"-",C_WARN,8,"Tahoma");
-      SN_Label("news_title_"+IntegerToString(i),x+pad+4,row_y+16,"-",C_TEXT,9,"Tahoma");
+      SN_Label("news_title_"+IntegerToString(i),x+pad+4,row_y+14,"-",C_TEXT,9,"Tahoma");
+      SN_Label("news_values_"+IntegerToString(i),x+pad+4,row_y+27,"-",C_MUTED,7,"Tahoma");
       if(i<SN_NEWS_ROWS-1)
-         SN_Rect("news_sep_"+IntegerToString(i),x+pad+4,row_y+33,SN_WIDTH-2*pad-8,1,C_BORDER,C_BORDER);
+         SN_Rect("news_sep_"+IntegerToString(i),x+pad+4,row_y+40,SN_WIDTH-2*pad-8,1,C_BORDER,C_BORDER);
    }
 
    if(InpSN_ShowHeadlines)
    {
-      SN_Label("headlines_title",x+pad,y+386,"تیترهای جهانی",C_ACCENT,9,"Tahoma");
-      SN_Label("headlines_status",x+pad,y+407,"در حال دریافت تیترها...",C_MUTED,7,"Tahoma");
+      SN_Label("headlines_title",x+pad,y+414,"تیترهای جهانی",C_ACCENT,9,"Tahoma");
+      SN_Label("headlines_status",x+pad,y+434,"در حال دریافت تیترها...",C_MUTED,7,"Tahoma");
       for(int i=0;i<SN_HEADLINE_ROWS;i++)
       {
-         int row_y=y+426+i*22;
+         int row_y=y+453+i*23;
          SN_Label("headline_title_"+IntegerToString(i),x+pad+4,row_y,"-",C_TEXT,8,"Tahoma");
          SN_Label("headline_meta_"+IntegerToString(i),x+pad+4,row_y+13,"-",C_MUTED,7,"Tahoma");
       }
@@ -322,6 +330,7 @@ void SN_UpdatePanel()
    {
       string meta="-";
       string title=(i==0 && !gNewsDataOK)? "داده تقویم اقتصادی دریافت نشد":"رویدادی ثبت نشده";
+      string values="-";
       color clr=C_MUTED;
       if(i<gNewsCount)
       {
@@ -329,10 +338,14 @@ void SN_UpdatePanel()
               " | "+TimeToString(gNews[i].time,TIME_DATE|TIME_MINUTES);
          title=SN_TranslateNewsTitle(gNews[i].title);
          if(StringLen(title)>48) title=StringSubstr(title,0,45)+"...";
+         values="واقعی: "+SN_FormatCalendarValue(gNews[i].hasActual,gNews[i].actual,gNews[i].digits)+
+                "  پیش‌بینی: "+SN_FormatCalendarValue(gNews[i].hasForecast,gNews[i].forecast,gNews[i].digits)+
+                "  قبلی: "+SN_FormatCalendarValue(gNews[i].hasPrevious,gNews[i].previous,gNews[i].digits);
          clr=NewsImportanceColor(gNews[i].importance);
       }
       SN_SetLabel("news_meta_"+IntegerToString(i),meta,clr);
       SN_SetLabel("news_title_"+IntegerToString(i),title,i<gNewsCount? C_TEXT:C_MUTED);
+      SN_SetLabel("news_values_"+IntegerToString(i),values,i<gNewsCount? C_MUTED:C_MUTED);
    }
 
    if(InpSN_ShowHeadlines)
