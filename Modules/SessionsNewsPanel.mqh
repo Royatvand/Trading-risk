@@ -321,7 +321,7 @@ void SN_UpdatePanel()
 
    string calendar_status;
    if(!gNewsDataOK) calendar_status="تقویم اقتصادی در دسترس نیست؛ اتصال و پشتیبانی بروکر را بررسی کن";
-   else if(gNewsCount<=0) calendar_status="رویداد آینده‌ای برای ارزهای این نماد ثبت نشده";
+   else if(gNewsCount<=0) calendar_status="رویدادی برای نمایش در این نماد ثبت نشده";
    else calendar_status=IntegerToString(gNewsCount)+" رویداد | زمان انتشار بر اساس سرور بروکر";
    if(gNewsBlock) calendar_status+=" | فیلتر خبری: مسدود";
    SN_SetLabel("calendar_status",calendar_status,gNewsBlock? C_SELL:(gNewsDataOK? C_MUTED:C_WARN));
