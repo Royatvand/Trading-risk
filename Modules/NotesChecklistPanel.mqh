@@ -232,6 +232,8 @@ bool NC_Save()
    return true;
 }
 
+void NC_UpdatePanel();
+
 void NC_SetMinimized(const bool minimized)
 {
    if(g_nc_minimized==minimized) return;
@@ -265,7 +267,7 @@ void NC_UpdatePanel()
 }
 
 
-string nc_PositionKey(const string axis)
+string NC_PositionKey(const string axis)
 {
    string symbol=_Symbol;
    StringReplace(symbol,".","_");
@@ -274,24 +276,24 @@ string nc_PositionKey(const string axis)
           symbol+"_"+IntegerToString((int)_Period)+"_"+axis;
 }
 
-void nc_LoadPosition()
+void NC_LoadPosition()
 {
    g_nc_x=InpNC_X;
    g_nc_y=InpNC_Y;
-   string kx=nc_PositionKey("X");
-   string ky=nc_PositionKey("Y");
+   string kx=NC_PositionKey("X");
+   string ky=NC_PositionKey("Y");
    if(GlobalVariableCheck(kx)) g_nc_x=(int)GlobalVariableGet(kx);
    if(GlobalVariableCheck(ky)) g_nc_y=(int)GlobalVariableGet(ky);
 }
 
-void nc_SavePosition()
+void NC_SavePosition()
 {
-   GlobalVariableSet(nc_PositionKey("X"),g_nc_x);
-   GlobalVariableSet(nc_PositionKey("Y"),g_nc_y);
+   GlobalVariableSet(NC_PositionKey("X"),g_nc_x);
+   GlobalVariableSet(NC_PositionKey("Y"),g_nc_y);
    GlobalVariablesFlush();
 }
 
-void nc_MovePanel(const int x,const int y)
+void NC_MovePanel(const int x,const int y)
 {
    int dx=x-g_nc_x, dy=y-g_nc_y;
    if(dx==0 && dy==0) return;
@@ -309,7 +311,7 @@ void nc_MovePanel(const int x,const int y)
    ChartRedraw(0);
 }
 
-void nc_HandleDrag(const int id,const long &lparam,
+void NC_HandleDrag(const int id,const long &lparam,
                          const double &dparam,const string &sparam)
 {
    if(id!=CHARTEVENT_MOUSE_MOVE) return;
@@ -336,13 +338,13 @@ void nc_HandleDrag(const int id,const long &lparam,
       int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
       int nx=MathMax(0,MathMin(MathMax(0,chartW-NC_WIDTH),mx-g_nc_drag_dx));
       int ny=MathMax(0,MathMin(MathMax(0,chartH-44),my-g_nc_drag_dy));
-      nc_MovePanel(nx,ny);
+      NC_MovePanel(nx,ny);
    }
    else
    {
       g_nc_dragging=false;
       ChartSetInteger(0,CHART_MOUSE_SCROLL,g_nc_prev_scroll!=0);
-      nc_SavePosition();
+      NC_SavePosition();
    }
 }
 
