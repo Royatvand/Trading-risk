@@ -1762,7 +1762,6 @@ void RenderToolbar()
    ArrayResize(g_bmp, w * h);
    ArrayInitialize(g_bmp, 0);
 
-   
    if(g_tbMin)
    {
       FillRR(w, h, 0, 0, w, h, 7.0, 0x3A4150, 200);
