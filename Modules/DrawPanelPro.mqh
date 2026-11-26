@@ -1655,9 +1655,9 @@ void CreateUI()
 
    // floating edit bar
    MakeRectUI("fb_bg", C_HEADER);
-   MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, clrWhite, "Color", 10);
-   MakeBtn("fb_wid",  "2px", 44, 24, C_BTN, clrWhite, "Line width", 9);
-   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C_BTN, clrWhite, "Line style", 10);
+   MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, C_TEXT, "Color", 10);
+   MakeBtn("fb_wid",  "2px", 44, 24, C_BTN, C_TEXT, "Line width", 9);
+   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C_BTN, C_TEXT, "Line style", 10);
    string te = UI + "fb_txt";
    if(ObjectFind(0, te) < 0) ObjectCreate(0, te, OBJ_EDIT, 0, 0, 0);
    ObjectSetInteger(0, te, OBJPROP_XSIZE, 92);
@@ -1669,15 +1669,15 @@ void CreateUI()
    ObjectSetInteger(0, te, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, te, OBJPROP_HIDDEN, true);
    ObjectSetString(0, te, OBJPROP_TOOLTIP, "Text on the line / text object (press Enter)");
-   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C_BTN, clrWhite, "Fill on/off (box)", 10);
-   MakeBtn("fb_tf",   "TF", 28, 24, C_BTN, clrWhite, "Show only on this timeframe (toggle)", 9);
-   MakeBtn("fb_lock", "LCK", 34, 24, C_BTN, clrWhite, "Lock", 8);
+   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C_BTN, C_TEXT, "Fill on/off (box)", 10);
+   MakeBtn("fb_tf",   "TF", 28, 24, C_BTN, C_TEXT, "Show only on this timeframe (toggle)", 9);
+   MakeBtn("fb_lock", "LCK", 34, 24, C_BTN, C_TEXT, "Lock", 8);
    MakeBtn("fb_del",  "DEL", 34, 24, C_DANGER_BG, C_SELL, "Delete", 8);
 
    // palette popup
    MakeRectUI("pal_bg", C_HEADER);
    for(int i = 0; i < 8; i++)
-      MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], clrWhite, "Color", 8);
+      MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], C_TEXT, "Color", 8);
 
    HideFB();
    PalHide();
@@ -2276,7 +2276,7 @@ void MakeLS(string base, datetime t1, double entry, double sl)
       ObjectSetInteger(0, rects[i], OBJPROP_SELECTED, false);
       ObjectSetInteger(0, rects[i], OBJPROP_HIDDEN, false);
    }
-   ObjectSetInteger(0, lbn, OBJPROP_COLOR, clrWhite);
+   ObjectSetInteger(0, lbn, OBJPROP_COLOR, C_TEXT);
    ObjectSetInteger(0, lbn, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, lbn, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, lbn, OBJPROP_SELECTED, false);
@@ -3129,32 +3129,32 @@ void CreateList()
    MkLabelUI("ls_title", "OBJECTS", C_TEXT, 9);
    MkBtnLs("ls_close", "x", 20, 18, C_DANGER_BG, C_SELL, "Close");
    MkLabelUI("ls_hint", "", C_MUTED, 7);
-   MkBtnLs("ls_auto", "", LSW - 16, 22, C_ACCENT_SOFT, clrWhite, "Convert native MT5 drawings (default names) to panel style");
+   MkBtnLs("ls_auto", "", LSW - 16, 22, C_ACCENT_SOFT, C_TEXT, "Convert native MT5 drawings (default names) to panel style");
    MkLabelUI("ls_sel", "SELECTED: 0", C_TEXT, 8);
-   MkBtnLs("ls_only", "Only", 158, 22, C_ACCENT_SOFT, clrWhite, "Show selected only on this timeframe");
-   MkBtnLs("ls_alltf", "All TFs", 158, 22, C_BTN, clrWhite, "Show selected on all timeframes");
-   MkBtnLs("ls_style", "Apply line style", 104, 22, C_BTN, clrWhite, "Apply current color / width / style to the selected");
+   MkBtnLs("ls_only", "Only", 158, 22, C_ACCENT_SOFT, C_TEXT, "Show selected only on this timeframe");
+   MkBtnLs("ls_alltf", "All TFs", 158, 22, C_BTN, C_TEXT, "Show selected on all timeframes");
+   MkBtnLs("ls_style", "Apply line style", 104, 22, C_BTN, C_TEXT, "Apply current color / width / style to the selected");
    MkBtnLs("ls_delsel", "Delete selected", 104, 22, C_DANGER_BG, C_SELL, "Delete the selected");
-   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C_BTN, clrWhite, "Clear selection");
+   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C_BTN, C_TEXT, "Clear selection");
 
    for(int r = 0; r < InpListRows; r++)
    {
       string k = IntegerToString(r);
-      MkBtnLs("ls_c" + k, "", 20, 20, C_BTN, clrWhite, "Select");
+      MkBtnLs("ls_c" + k, "", 20, 20, C_BTN, C_TEXT, "Select");
       MakeRectUI("ls_k" + k, clrDodgerBlue);
       LsAdd("ls_k" + k);
-      MkBtnLs("ls_n" + k, "", 148, 20, C_CARD, clrWhite, "Click to select on chart");
-      MkBtnLs("ls_t" + k, "", 46, 20, C_BTN, clrWhite, "Only on this timeframe");
-      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C_BTN, clrWhite, "All timeframes");
+      MkBtnLs("ls_n" + k, "", 148, 20, C_CARD, C_TEXT, "Click to select on chart");
+      MkBtnLs("ls_t" + k, "", 46, 20, C_BTN, C_TEXT, "Only on this timeframe");
+      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C_BTN, C_TEXT, "All timeframes");
       MkBtnLs("ls_x" + k, "x", 22, 20, C_DANGER_BG, C_SELL, "Delete");
    }
 
-   MkBtnLs("ls_prev", "<", 26, 22, C_BTN, clrWhite, "Previous page");
-   MkBtnLs("ls_next", ">", 26, 22, C_BTN, clrWhite, "Next page");
+   MkBtnLs("ls_prev", "<", 26, 22, C_BTN, C_TEXT, "Previous page");
+   MkBtnLs("ls_next", ">", 26, 22, C_BTN, C_TEXT, "Next page");
    MkLabelUI("ls_page", "Page 1 / 1", C_MUTED, 8);
-   MkBtnLs("ls_all", "All", 34, 22, C_BTN, clrWhite, "Select all");
-   MkBtnLs("ls_none", "None", 44, 22, C_BTN, clrWhite, "Select none");
-   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C_BTN, clrWhite, "Make every drawing visible on all timeframes");
+   MkBtnLs("ls_all", "All", 34, 22, C_BTN, C_TEXT, "Select all");
+   MkBtnLs("ls_none", "None", 44, 22, C_BTN, C_TEXT, "Select none");
+   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C_BTN, C_TEXT, "Make every drawing visible on all timeframes");
    ShowList(false);
 }
 
