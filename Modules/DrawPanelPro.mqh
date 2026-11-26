@@ -1428,6 +1428,7 @@ string    g_ovr[];
 bool      g_useOverride = false;
 int       g_hover = -1, g_tbIdx = 0, g_tbCols = 1;
 bool      g_tbMoved = false, g_drag = false;
+bool      g_tbMin = false;
 int       g_tbCX = 0, g_tbCY = 0, g_dragDX = 0, g_dragDY = 0;
 long      g_prevScroll = 1;
 uint      g_bmp[];
@@ -1761,6 +1762,23 @@ void RenderToolbar()
    ArrayResize(g_bmp, w * h);
    ArrayInitialize(g_bmp, 0);
 
+   
+   if(g_tbMin)
+   {
+      FillRR(w, h, 0, 0, w, h, 7.0, 0x3A4150, 200);
+      FillRR(w, h, 1, 1, w - 2, h - 2, 6.0, 0x161A22, 240);
+      for(int gr = 0; gr < 3; gr++)
+         for(int gc = 0; gc < 2; gc++)
+            FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF7A8296);
+      FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EAF2, 255);
+      FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EAF2, 255);
+   
+      g_tbIdx = 1 - g_tbIdx;
+      string miniRes = "::dp_tb" + IntegerToString(g_tbIdx);
+      ResourceCreate(miniRes, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
+      ObjectSetString(0, UI + "tb", OBJPROP_BMPFILE, miniRes);
+      return;
+   }
    FillRR(w, h, 0, 0, w, h, 11.0, 0x3A4150, 200);          // thin border
    FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, 0x161A22, 240);  // body
 
@@ -1800,6 +1818,11 @@ void RenderToolbar()
          FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, 0x4A5264, 255);
    }
 
+   // Dedicated minimize control at the right edge of the toolbar.
+   int minX = w - 19, minY = (h - 14) / 2;
+   FillRR(w, h, minX, minY, 14, 14, 4.0, 0x2E3542, 255);
+   FillRR(w, h, minX + 3, minY + 6, 8, 2, 0.5, 0xFFE6EAF2, 255);
+
    g_tbIdx = 1 - g_tbIdx;
    string res = "::dp_tb" + IntegerToString(g_tbIdx);
    ResourceCreate(res, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
@@ -1811,11 +1834,13 @@ void LayoutToolbar()
    int W = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS);
    int H = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
    int n = ArraySize(I_id);
-   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP + CGAP) / (CELL + CGAP)));
+   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP - 22 + CGAP) / (CELL + CGAP)));
    int rows = (n + cols - 1) / cols;
    g_tbCols = cols;
-   g_tbW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
-   g_tbH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   int fullW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
+   int fullH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   g_tbW = g_tbMin ? 48 : fullW + 22;
+   g_tbH = g_tbMin ? 26 : fullH;
    g_tbX = InpLeft;
    g_tbY = H - InpBottom - g_tbH;
    if(g_tbMoved)
@@ -3704,6 +3729,14 @@ void ToolbarClick(int x, int y)
    ulong now = GetTickCount64();
    if(now - g_lastTbClick < 200) return;     // OBJECT_CLICK and CLICK can both fire
    g_lastTbClick = now;
+   if(InRect(x, y, g_tbX + g_tbW - 20, g_tbY + (g_tbH - 18) / 2, 18, 18))
+   {
+      g_tbMin = !g_tbMin;
+      g_hover = -1;
+      HideTip();
+      LayoutToolbar();
+      return;
+   }
    int i = ItemAt(x, y);
    if(i < 0) return;
    HandleUI(I_id[i]);
