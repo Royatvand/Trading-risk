@@ -406,17 +406,11 @@ void SN_ChartEvent(const int id,const long &lparam,const double &dparam,const st
 {
    if(id!=CHARTEVENT_OBJECT_CLICK) return;
    if(sparam==SN_PREFIX+"btn_min")
-
    {
-
       g_sn_minimized=!g_sn_minimized;
-
       SN_ApplyMinimize();
-
       ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
-
    }
-
    else if(sparam==SN_PREFIX+"btn_news_refresh")
    {
       ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
