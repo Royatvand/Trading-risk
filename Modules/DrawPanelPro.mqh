@@ -1939,6 +1939,7 @@ bool DragToolbar(int x, int y, int flags)
    g_tbCY = g_tbY;
    GlobalVariableSet("DPN_tbx", g_tbCX);
    GlobalVariableSet("DPN_tby", g_tbCY);
+   GlobalVariablesFlush();
    ChartSetInteger(0, CHART_MOUSE_SCROLL, g_prevScroll != 0);
    return false;
 }
