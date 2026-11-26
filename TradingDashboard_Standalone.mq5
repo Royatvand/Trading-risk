@@ -1621,6 +1621,7 @@ string    g_ovr[];
 bool      g_useOverride = false;
 int       g_hover = -1, g_tbIdx = 0, g_tbCols = 1;
 bool      g_tbMoved = false, g_drag = false;
+bool      g_tbMin = false;
 int       g_tbCX = 0, g_tbCY = 0, g_dragDX = 0, g_dragDY = 0;
 long      g_prevScroll = 1;
 uint      g_bmp[];
@@ -1954,6 +1955,23 @@ void RenderToolbar()
    ArrayResize(g_bmp, w * h);
    ArrayInitialize(g_bmp, 0);
 
+   
+   if(g_tbMin)
+   {
+      FillRR(w, h, 0, 0, w, h, 7.0, 0x3A4150, 200);
+      FillRR(w, h, 1, 1, w - 2, h - 2, 6.0, 0x161A22, 240);
+      for(int gr = 0; gr < 3; gr++)
+         for(int gc = 0; gc < 2; gc++)
+            FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF7A8296);
+      FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EAF2, 255);
+      FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EAF2, 255);
+   
+      g_tbIdx = 1 - g_tbIdx;
+      string miniRes = "::dp_tb" + IntegerToString(g_tbIdx);
+      ResourceCreate(miniRes, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
+      ObjectSetString(0, UI + "tb", OBJPROP_BMPFILE, miniRes);
+      return;
+   }
    FillRR(w, h, 0, 0, w, h, 11.0, 0x3A4150, 200);          // thin border
    FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, 0x161A22, 240);  // body
 
@@ -1993,6 +2011,11 @@ void RenderToolbar()
          FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, 0x4A5264, 255);
    }
 
+   // Dedicated minimize control at the right edge of the toolbar.
+   int minX = w - 19, minY = (h - 14) / 2;
+   FillRR(w, h, minX, minY, 14, 14, 4.0, 0x2E3542, 255);
+   FillRR(w, h, minX + 3, minY + 6, 8, 2, 0.5, 0xFFE6EAF2, 255);
+
    g_tbIdx = 1 - g_tbIdx;
    string res = "::dp_tb" + IntegerToString(g_tbIdx);
    ResourceCreate(res, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
@@ -2004,11 +2027,13 @@ void LayoutToolbar()
    int W = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS);
    int H = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
    int n = ArraySize(I_id);
-   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP + CGAP) / (CELL + CGAP)));
+   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP - 22 + CGAP) / (CELL + CGAP)));
    int rows = (n + cols - 1) / cols;
    g_tbCols = cols;
-   g_tbW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
-   g_tbH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   int fullW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
+   int fullH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   g_tbW = g_tbMin ? 48 : fullW + 22;
+   g_tbH = g_tbMin ? 26 : fullH;
    g_tbX = InpLeft;
    g_tbY = H - InpBottom - g_tbH;
    if(g_tbMoved)
@@ -3897,6 +3922,14 @@ void ToolbarClick(int x, int y)
    ulong now = GetTickCount64();
    if(now - g_lastTbClick < 200) return;     // OBJECT_CLICK and CLICK can both fire
    g_lastTbClick = now;
+   if(InRect(x, y, g_tbX + g_tbW - 20, g_tbY + (g_tbH - 18) / 2, 18, 18))
+   {
+      g_tbMin = !g_tbMin;
+      g_hover = -1;
+      HideTip();
+      LayoutToolbar();
+      return;
+   }
    int i = ItemAt(x, y);
    if(i < 0) return;
    HandleUI(I_id[i]);
@@ -4040,6 +4073,28 @@ input bool InpSN_ShowHeadlines = true;    // Show GDELT headlines section
 #define SN_HEIGHT 510
 #define SN_NEWS_ROWS 4
 #define SN_HEADLINE_ROWS 2
+bool g_sn_minimized=false;
+
+// Keep the title bar and its toggle visible while the panel is collapsed.
+void SN_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,SN_PREFIX)!=0) continue;
+      bool keep=(name==SN_PREFIX+"bg" || name==SN_PREFIX+"header" ||
+                 name==SN_PREFIX+"line" || name==SN_PREFIX+"title" ||
+                 name==SN_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_sn_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,SN_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,SN_PREFIX+"bg",OBJPROP_YSIZE,g_sn_minimized?44:SN_HEIGHT);
+   if(ObjectFind(0,SN_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,SN_PREFIX+"btn_min",OBJPROP_TEXT,g_sn_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 //--- UI helpers
 void SN_Rect(string id,int x,int y,int w,int h,color bg,color border)
@@ -4289,7 +4344,8 @@ void SN_CreatePanel()
    SN_Rect("header",x,y,SN_WIDTH,42,C_HEADER,C_HEADER);
    SN_Rect("line",x,y+42,SN_WIDTH,2,C_ACCENT,C_ACCENT);
    SN_Label("title",x+pad,y+11,"سشن‌ها و اخبار اقتصادی",C_TEXT,11,"Tahoma");
-   SN_Button("btn_news_refresh",x+SN_WIDTH-91,y+9,78,24,"تازه‌سازی خبر");
+   SN_Button("btn_news_refresh",x+SN_WIDTH-122,y+9,78,24,"تازه‌سازی خبر");
+   SN_Button("btn_min",x+SN_WIDTH-38,y+9,26,24,"–");
 
    SN_Label("sessions_title",x+pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma");
    SN_Rect("candle_chip",x+SN_WIDTH-160,y+50,147,24,C_CARD,C_BORDER);
@@ -4398,6 +4454,7 @@ bool SN_Init()
 {
    SN_CreatePanel();
    SN_UpdatePanel();
+   SN_ApplyMinimize();
    return true;
 }
 
@@ -4410,7 +4467,19 @@ void SN_Deinit()
 void SN_ChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
 {
    if(id!=CHARTEVENT_OBJECT_CLICK) return;
-   if(sparam==SN_PREFIX+"btn_news_refresh")
+   if(sparam==SN_PREFIX+"btn_min")
+
+   {
+
+      g_sn_minimized=!g_sn_minimized;
+
+      SN_ApplyMinimize();
+
+      ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+
+   }
+
+   else if(sparam==SN_PREFIX+"btn_news_refresh")
    {
       ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
       RefreshNews();
@@ -4802,6 +4871,28 @@ input int InpNC_Y = 25;                  // Panel Y position
 
 string g_nc_note="";
 bool g_nc_checked[NC_ITEMS];
+bool g_nc_minimized=false;
+
+// Keep the header accessible while hiding checklist and note controls.
+void NC_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,NC_PREFIX)!=0) continue;
+      bool keep=(name==NC_PREFIX+"bg" || name==NC_PREFIX+"header" ||
+                 name==NC_PREFIX+"line" || name==NC_PREFIX+"title" ||
+                 name==NC_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_nc_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,NC_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,NC_PREFIX+"bg",OBJPROP_YSIZE,g_nc_minimized?44:NC_HEIGHT);
+   if(ObjectFind(0,NC_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,NC_PREFIX+"btn_min",OBJPROP_TEXT,g_nc_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 string NC_FileName()
 {
@@ -4920,6 +5011,7 @@ void NC_CreatePanel()
    NC_Rect("header",x,y,NC_WIDTH,42,C_HEADER,C_HEADER);
    NC_Rect("line",x,y+42,NC_WIDTH,2,C_ACCENT,C_ACCENT);
    NC_Label("title",x+pad,y+11,"یادداشت و چک‌لیست معامله",C_TEXT,11);
+    NC_Button("btn_min",x+NC_WIDTH-38,y+9,26,24,"–",C_BTN,C_TEXT);
 
    NC_Label("note_title",x+pad,y+55,"یادداشت سریع",C_ACCENT,9);
    NC_Edit("note_edit",x+pad,y+76,230,27,g_nc_note);
@@ -5000,6 +5092,7 @@ bool NC_Init()
    NC_Load();
    NC_CreatePanel();
    NC_UpdatePanel();
+   NC_ApplyMinimize();
    return true;
 }
 
@@ -5016,6 +5109,20 @@ void NC_ChartEvent(const int id,const long &lparam,const double &dparam,const st
 {
    if(id==CHARTEVENT_OBJECT_CLICK)
    {
+      if(sparam==NC_PREFIX+"btn_min")
+      {
+         if(!g_nc_minimized)
+         {
+            string edit=NC_PREFIX+"note_edit";
+            if(ObjectFind(0,edit)>=0) g_nc_note=ObjectGetString(0,edit,OBJPROP_TEXT);
+            NC_Save();
+         }
+         g_nc_minimized=!g_nc_minimized;
+         NC_ApplyMinimize();
+         if(!g_nc_minimized) NC_UpdatePanel();
+         ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+         return;
+      }
       if(sparam==NC_PREFIX+"btn_save")
       {
          g_nc_note=ObjectGetString(0,NC_PREFIX+"note_edit",OBJPROP_TEXT);
