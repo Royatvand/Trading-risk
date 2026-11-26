@@ -1964,7 +1964,7 @@ void RenderToolbar()
             FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF7A8296);
       FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EAF2, 255);
       FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EAF2, 255);
-   
+
       g_tbIdx = 1 - g_tbIdx;
       string miniRes = "::dp_tb" + IntegerToString(g_tbIdx);
       ResourceCreate(miniRes, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
