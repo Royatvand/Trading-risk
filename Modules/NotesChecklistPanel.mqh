@@ -12,6 +12,28 @@ input int InpNC_Y = 25;                  // Panel Y position
 
 string g_nc_note="";
 bool g_nc_checked[NC_ITEMS];
+bool g_nc_minimized=false;
+
+// Keep the header accessible while hiding checklist and note controls.
+void NC_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,NC_PREFIX)!=0) continue;
+      bool keep=(name==NC_PREFIX+"bg" || name==NC_PREFIX+"header" ||
+                 name==NC_PREFIX+"line" || name==NC_PREFIX+"title" ||
+                 name==NC_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_nc_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,NC_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,NC_PREFIX+"bg",OBJPROP_YSIZE,g_nc_minimized?44:NC_HEIGHT);
+   if(ObjectFind(0,NC_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,NC_PREFIX+"btn_min",OBJPROP_TEXT,g_nc_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 string NC_FileName()
 {
@@ -130,6 +152,7 @@ void NC_CreatePanel()
    NC_Rect("header",x,y,NC_WIDTH,42,C_HEADER,C_HEADER);
    NC_Rect("line",x,y+42,NC_WIDTH,2,C_ACCENT,C_ACCENT);
    NC_Label("title",x+pad,y+11,"یادداشت و چک‌لیست معامله",C_TEXT,11);
+    NC_Button("btn_min",x+NC_WIDTH-38,y+9,26,24,"–",C_BTN,C_TEXT);
 
    NC_Label("note_title",x+pad,y+55,"یادداشت سریع",C_ACCENT,9);
    NC_Edit("note_edit",x+pad,y+76,230,27,g_nc_note);
@@ -210,6 +233,7 @@ bool NC_Init()
    NC_Load();
    NC_CreatePanel();
    NC_UpdatePanel();
+   NC_ApplyMinimize();
    return true;
 }
 
@@ -226,6 +250,20 @@ void NC_ChartEvent(const int id,const long &lparam,const double &dparam,const st
 {
    if(id==CHARTEVENT_OBJECT_CLICK)
    {
+      if(sparam==NC_PREFIX+"btn_min")
+      {
+         if(!g_nc_minimized)
+         {
+            string edit=NC_PREFIX+"note_edit";
+            if(ObjectFind(0,edit)>=0) g_nc_note=ObjectGetString(0,edit,OBJPROP_TEXT);
+            NC_Save();
+         }
+         g_nc_minimized=!g_nc_minimized;
+         NC_ApplyMinimize();
+         if(!g_nc_minimized) NC_UpdatePanel();
+         ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+         return;
+      }
       if(sparam==NC_PREFIX+"btn_save")
       {
          g_nc_note=ObjectGetString(0,NC_PREFIX+"note_edit",OBJPROP_TEXT);
