@@ -1874,6 +1874,15 @@ int ItemAt(int x, int y)
 
 void HideTip() { ObjectSetInteger(0, UI + "tip", OBJPROP_TIMEFRAMES, OBJ_NO_PERIODS); }
 
+void DPP_SetMinimized(const bool minimized)
+{
+   if(g_tbMin==minimized) return;
+   g_tbMin=minimized;
+   g_hover=-1;
+   HideTip();
+   LayoutToolbar();
+}
+
 void ShowTip(int i)
 {
    string txt = I_tp[i];
