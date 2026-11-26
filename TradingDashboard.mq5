@@ -151,6 +151,13 @@ struct NewsItem
    string   currency;
    string   title;
    int      importance;
+   int      digits;
+   bool     hasActual;
+   bool     hasForecast;
+   bool     hasPrevious;
+   double   actual;
+   double   forecast;
+   double   previous;
   };
 NewsItem gNews[];
 int      gNewsCount=0;
@@ -734,7 +741,10 @@ void RefreshNews()
    int days=InpNewsDisplayDays;
    if(days<1) days=1;
    if(days>14) days=14;
-   datetime from=now-InpNewsAfter*60;
+   int beforeMinutes=MathMax(0,InpNewsBefore);
+   int afterMinutes=MathMax(0,InpNewsAfter);
+   int historyMinutes=MathMax(afterMinutes,120); // Keep recently released values visible.
+   datetime from=now-historyMinutes*60;
    datetime to=now+(datetime)days*86400;
    int minImp=(InpNewsLevel==NEWS_HIGH)? (int)CALENDAR_IMPORTANCE_HIGH :
               (InpNewsLevel==NEWS_MED_HIGH)? (int)CALENDAR_IMPORTANCE_MODERATE :
@@ -757,18 +767,19 @@ void RefreshNews()
          MqlCalendarEvent ev;
          if(!CalendarEventById(vals[i].event_id,ev)) continue;
 
+         // Before/after windows are measured around the event timestamp.
          if(InpNewsLevel!=NEWS_OFF &&
             (int)ev.importance>=minImp &&
-            vals[i].time>=now-InpNewsBefore*60 &&
-            vals[i].time<=now+InpNewsAfter*60)
+            vals[i].time>=now-afterMinutes*60 &&
+            vals[i].time<=now+beforeMinutes*60)
            {
             gNewsBlock=true;
             if(gNewsInfo=="") gNewsInfo=cur[c]+" "+ev.name;
            }
 
-         // The calendar list is for upcoming events; past events are only
-         // considered above for the post-news trading lock.
-         if(vals[i].time<now) continue;
+         // Keep upcoming events and the last two hours of releases so the
+         // actual result remains visible shortly after publication.
+         if(vals[i].time<now-2*3600) continue;
 
          int n=ArraySize(gNews);
          ArrayResize(gNews,n+1);
@@ -777,6 +788,13 @@ void RefreshNews()
          gNews[n].currency=cur[c];
          gNews[n].title=ev.name;
          gNews[n].importance=(int)ev.importance;
+         gNews[n].digits=(int)ev.digits;
+         gNews[n].hasActual=vals[i].HasActualValue();
+         gNews[n].hasForecast=vals[i].HasForecastValue();
+         gNews[n].hasPrevious=vals[i].HasPreviousValue();
+         gNews[n].actual=gNews[n].hasActual ? vals[i].GetActualValue() : 0.0;
+         gNews[n].forecast=gNews[n].hasForecast ? vals[i].GetForecastValue() : 0.0;
+         gNews[n].previous=gNews[n].hasPrevious ? vals[i].GetPreviousValue() : 0.0;
         }
      }
 
