@@ -126,6 +126,11 @@ string gWarn       = "";
 string gLastReason = "";
 int    gPanelH     = 0;
 bool   gMin        = false;
+int    gPanelX     = 0;
+int    gPanelY     = 0;
+bool   gPanelDragging=false;
+int    gPanelDragDX=0,gPanelDragDY=0;
+long   gPanelPrevScroll=1;
 int    gTab        = 0;      // active management view: Account, Setup, Trade, Manage
 int    gCurTab     = -1;     // tab currently being built
 int    gTabH[4];             // panel height per tab
@@ -311,7 +316,7 @@ void ApplyTab()
      }
 
    // status bar sits right under the active tab's content
-   int sy=InpPanelY+gTabH[gTab];
+   int sy=gPanelY+gTabH[gTab];
    ObjectSetInteger(0,PFX+"st_bg",OBJPROP_YDISTANCE,sy);
    ObjectSetInteger(0,PFX+"status",OBJPROP_YDISTANCE,sy+7);
    ObjectSetInteger(0,PFX+"bg",OBJPROP_YSIZE,gMin? 48 : gTabH[gTab]+28);
@@ -319,12 +324,102 @@ void ApplyTab()
    ChartRedraw();
   }
 
+
+string SMM_PositionKey(const string axis)
+{
+   string symbol=_Symbol;
+   StringReplace(symbol,".","_");
+   StringReplace(symbol,"/","_");
+   return "CM_RISK_"+IntegerToString((int)AccountInfoInteger(ACCOUNT_LOGIN))+"_"+
+          symbol+"_"+IntegerToString((int)_Period)+"_"+axis;
+}
+
+void SMM_LoadPanelPosition()
+{
+   gPanelX=InpPanelX;
+   gPanelY=InpPanelY;
+   string kx=SMM_PositionKey("X");
+   string ky=SMM_PositionKey("Y");
+   if(GlobalVariableCheck(kx)) gPanelX=(int)GlobalVariableGet(kx);
+   if(GlobalVariableCheck(ky)) gPanelY=(int)GlobalVariableGet(ky);
+}
+
+void SMM_SavePanelPosition()
+{
+   GlobalVariableSet(SMM_PositionKey("X"),gPanelX);
+   GlobalVariableSet(SMM_PositionKey("Y"),gPanelY);
+   GlobalVariablesFlush();
+}
+
+void SMM_MovePanel(const int x,const int y)
+{
+   int dx=x-gPanelX,dy=y-gPanelY;
+   if(dx==0 && dy==0) return;
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,PFX)!=0) continue;
+      ObjectSetInteger(0,name,OBJPROP_XDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_XDISTANCE)+dx);
+      ObjectSetInteger(0,name,OBJPROP_YDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_YDISTANCE)+dy);
+   }
+   gPanelX=x;
+   gPanelY=y;
+   ApplyTab();
+}
+
+void SMM_HandlePanelDrag(const int id,const long &lparam,
+                         const double &dparam,const string &sparam)
+{
+   if(id!=CHARTEVENT_MOUSE_MOVE) return;
+   int mouse=(int)StringToInteger(sparam);
+   bool down=((mouse & 1)!=0);
+   int mx=(int)lparam,my=(int)dparam;
+
+   if(!gPanelDragging && down &&
+      mx>=gPanelX+8 && mx<=gPanelX+PW-50 &&
+      my>=gPanelY && my<=gPanelY+46)
+   {
+      gPanelDragging=true;
+      gPanelDragDX=mx-gPanelX;
+      gPanelDragDY=my-gPanelY;
+      gPanelPrevScroll=ChartGetInteger(0,CHART_MOUSE_SCROLL);
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,false);
+   }
+
+   if(!gPanelDragging) return;
+
+   if(down)
+   {
+      int chartW=(int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS);
+      int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+      int panelH=MathMax(48,gTabH[gTab]+28);
+      int nx=MathMax(0,MathMin(MathMax(0,chartW-PW),mx-gPanelDragDX));
+      int ny=MathMax(0,MathMin(MathMax(0,chartH-panelH),my-gPanelDragDY));
+      SMM_MovePanel(nx,ny);
+   }
+   else
+   {
+      gPanelDragging=false;
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,gPanelPrevScroll!=0);
+      SMM_SavePanelPosition();
+   }
+}
+
+void SMM_SetMinimized(const bool minimized)
+{
+   if(gMin==minimized) return;
+   gMin=minimized;
+   ApplyTab();
+}
+
 //+------------------------------------------------------------------+
 //| Build the whole panel (tabbed)                                   |
 //+------------------------------------------------------------------+
 void BuildPanel()
   {
-   int x=InpPanelX, y=InpPanelY;
+   int x=gPanelX, y=gPanelY;
    int pad=14, inner=PW-2*pad;
    int bw=(inner-8)/2;
    int cw=(inner-12)/3;
@@ -1733,6 +1828,86 @@ void UpdatePanel()
    ChartRedraw();
   }
 
+
+bool gCM_HasSnapshot=false;
+bool gCM_PrevRisk=false,gCM_PrevTools=false;
+bool gCM_PrevSessions=false,gCM_PrevNotes=false;
+
+string CM_RTLText(const string value)
+{
+   string mark=ShortToString(0x200F);
+   return mark+value+mark;
+}
+
+void CM_UpdateMasterControl()
+{
+   if(ObjectFind(0,"CMD_ALL")<0) return;
+   bool all=gMin && g_tbMin && g_sn_minimized && g_nc_minimized;
+   ObjectSetString(0,"CMD_ALL",OBJPROP_TEXT,
+                   CM_RTLText(all?"بازکردن همه":"جمع‌کردن همه"));
+}
+
+void CM_SetAllMinimized(const bool minimized)
+{
+   SMM_SetMinimized(minimized);
+   DPP_SetMinimized(minimized);
+   SN_SetMinimized(minimized);
+   NC_SetMinimized(minimized);
+}
+
+void CM_ToggleAll()
+{
+   bool all=gMin && g_tbMin && g_sn_minimized && g_nc_minimized;
+   if(!all)
+   {
+      gCM_PrevRisk=gMin;
+      gCM_PrevTools=g_tbMin;
+      gCM_PrevSessions=g_sn_minimized;
+      gCM_PrevNotes=g_nc_minimized;
+      gCM_HasSnapshot=true;
+      CM_SetAllMinimized(true);
+   }
+   else if(gCM_HasSnapshot)
+   {
+      SMM_SetMinimized(gCM_PrevRisk);
+      DPP_SetMinimized(gCM_PrevTools);
+      SN_SetMinimized(gCM_PrevSessions);
+      NC_SetMinimized(gCM_PrevNotes);
+      gCM_HasSnapshot=false;
+   }
+   else
+      CM_SetAllMinimized(false);
+
+   CM_UpdateMasterControl();
+}
+
+bool CM_CreateMasterControl()
+{
+   string name="CMD_ALL";
+   if(ObjectFind(0,name)<0 && !ObjectCreate(0,name,OBJ_BUTTON,0,0,0))
+   {
+      Print("Trading Dashboard: failed to create master panel button. Error: ",GetLastError());
+      return false;
+   }
+   ObjectSetInteger(0,name,OBJPROP_CORNER,CORNER_RIGHT_LOWER);
+   ObjectSetInteger(0,name,OBJPROP_XDISTANCE,12);
+   ObjectSetInteger(0,name,OBJPROP_YDISTANCE,10);
+   ObjectSetInteger(0,name,OBJPROP_XSIZE,118);
+   ObjectSetInteger(0,name,OBJPROP_YSIZE,26);
+   ObjectSetString(0,name,OBJPROP_FONT,"Tahoma");
+   ObjectSetInteger(0,name,OBJPROP_FONTSIZE,8);
+   ObjectSetInteger(0,name,OBJPROP_COLOR,C_TEXT);
+   ObjectSetInteger(0,name,OBJPROP_BGCOLOR,C_BTN);
+   ObjectSetInteger(0,name,OBJPROP_BORDER_COLOR,C_BORDER);
+   ObjectSetInteger(0,name,OBJPROP_STATE,false);
+   ObjectSetInteger(0,name,OBJPROP_SELECTABLE,false);
+   ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
+   ObjectSetInteger(0,name,OBJPROP_ZORDER,50);
+   ObjectSetString(0,name,OBJPROP_TOOLTIP,"Collapse or restore all dashboard panels");
+   CM_UpdateMasterControl();
+   return true;
+}
+
 //+------------------------------------------------------------------+
 //| Expert events                                                    |
 //+------------------------------------------------------------------+
@@ -1760,6 +1935,7 @@ int OnInit()
    UpdateStats(true);
    RefreshNews();
    RefreshHeadlines();
+   SMM_LoadPanelPosition();
    BuildPanel();
 
    // One high-resolution timer is shared by all modules.
@@ -1791,6 +1967,7 @@ int OnInit()
      }
 
    NC_Init();
+   CM_CreateMasterControl();
    UpdatePanel();
    CCT_Timer();
    SN_UpdatePanel();
@@ -1800,6 +1977,8 @@ int OnInit()
 
 void OnDeinit(const int reason)
   {
+   SMM_SavePanelPosition();
+   ObjectDelete(0,"CMD_ALL");
    NC_Deinit();
    CCT_Deinit(reason);
    SN_Deinit();
@@ -1850,10 +2029,25 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 
 void OnChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
   {
+   if(id==CHARTEVENT_OBJECT_CLICK && sparam=="CMD_ALL")
+     {
+      CM_ToggleAll();
+      ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+      return;
+     }
+
    DPP_ChartEvent(id,lparam,dparam,sparam);
    CCT_ChartEvent(id,lparam,dparam,sparam);
    SN_ChartEvent(id,lparam,dparam,sparam);
    NC_ChartEvent(id,lparam,dparam,sparam);
+   SMM_HandlePanelDrag(id,lparam,dparam,sparam);
+
+   if(id==CHARTEVENT_OBJECT_CLICK &&
+      (sparam==SN_PREFIX+"btn_min" || sparam==NC_PREFIX+"btn_min" || sparam==UI+"tb"))
+     {
+      CM_UpdateMasterControl();
+      return;
+     }
 
    if(id==CHARTEVENT_CHART_CHANGE)
      {
@@ -1863,7 +2057,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
 
    if(id==CHARTEVENT_OBJECT_CLICK)
      {
-      if(sparam==PFX+"btn_min")        { gMin=!gMin; ApplyTab(); }
+      if(sparam==PFX+"btn_min")        { SMM_SetMinimized(!gMin); CM_UpdateMasterControl(); }
       else if(StringFind(sparam,PFX+"tab_")==0)
         {
          gTab=(int)StringToInteger(StringSubstr(sparam,StringLen(PFX)+4,1));
