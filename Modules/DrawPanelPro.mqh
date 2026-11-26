@@ -1428,6 +1428,7 @@ string    g_ovr[];
 bool      g_useOverride = false;
 int       g_hover = -1, g_tbIdx = 0, g_tbCols = 1;
 bool      g_tbMoved = false, g_drag = false;
+bool      g_tbMin = false;
 int       g_tbCX = 0, g_tbCY = 0, g_dragDX = 0, g_dragDY = 0;
 long      g_prevScroll = 1;
 uint      g_bmp[];
@@ -1595,7 +1596,7 @@ void MakeBtn(string id, string text, int w, int h, color bg, color fg, string ti
    ObjectSetString(0, name, OBJPROP_FONT, FONT_UI);
    ObjectSetInteger(0, name, OBJPROP_COLOR, fg);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
-   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C'70,70,90');
+   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, fs);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
@@ -1620,7 +1621,7 @@ void MakeRectUI(string id, color bg)
    if(ObjectFind(0, name) < 0) ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
    ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
-   ObjectSetInteger(0, name, OBJPROP_COLOR, C'70,70,90');
+   ObjectSetInteger(0, name, OBJPROP_COLOR, C_BORDER);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
 }
@@ -1642,9 +1643,9 @@ void CreateUI()
    ObjectSetInteger(0, tip, OBJPROP_READONLY, true);
    ObjectSetInteger(0, tip, OBJPROP_XSIZE, 120);
    ObjectSetInteger(0, tip, OBJPROP_YSIZE, 20);
-   ObjectSetInteger(0, tip, OBJPROP_COLOR, clrWhite);
-   ObjectSetInteger(0, tip, OBJPROP_BGCOLOR, C'20,24,32');
-   ObjectSetInteger(0, tip, OBJPROP_BORDER_COLOR, C'70,70,90');
+   ObjectSetInteger(0, tip, OBJPROP_COLOR, C_TEXT);
+   ObjectSetInteger(0, tip, OBJPROP_BGCOLOR, C_CARD);
+   ObjectSetInteger(0, tip, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetString(0, tip, OBJPROP_FONT, "Segoe UI");
    ObjectSetInteger(0, tip, OBJPROP_FONTSIZE, 8);
    ObjectSetInteger(0, tip, OBJPROP_ALIGN, ALIGN_CENTER);
@@ -1653,29 +1654,30 @@ void CreateUI()
    ObjectSetInteger(0, tip, OBJPROP_TIMEFRAMES, OBJ_NO_PERIODS);
 
    // floating edit bar
-   MakeRectUI("fb_bg", C'30,30,44');
-   MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, clrWhite, "Color", 10);
-   MakeBtn("fb_wid",  "2px", 44, 24, C'40,40,56', clrWhite, "Line width", 9);
-   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C'40,40,56', clrWhite, "Line style", 10);
+   MakeRectUI("fb_bg", C_HEADER);
+   MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, C_TEXT, "Color", 10);
+   MakeBtn("fb_wid",  "2px", 44, 24, C_BTN, C_TEXT, "Line width", 9);
+   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C_BTN, C_TEXT, "Line style", 10);
    string te = UI + "fb_txt";
    if(ObjectFind(0, te) < 0) ObjectCreate(0, te, OBJ_EDIT, 0, 0, 0);
    ObjectSetInteger(0, te, OBJPROP_XSIZE, 92);
    ObjectSetInteger(0, te, OBJPROP_YSIZE, 24);
    ObjectSetString(0, te, OBJPROP_TEXT, "");
-   ObjectSetInteger(0, te, OBJPROP_COLOR, clrBlack);
-   ObjectSetInteger(0, te, OBJPROP_BGCOLOR, clrWhite);
+   ObjectSetInteger(0, te, OBJPROP_COLOR, C_TEXT);
+   ObjectSetInteger(0, te, OBJPROP_BGCOLOR, C_CARD);
+   ObjectSetInteger(0, te, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetInteger(0, te, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, te, OBJPROP_HIDDEN, true);
    ObjectSetString(0, te, OBJPROP_TOOLTIP, "Text on the line / text object (press Enter)");
-   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C'40,40,56', clrWhite, "Fill on/off (box)", 10);
-   MakeBtn("fb_tf",   "TF", 28, 24, C'40,40,56', clrWhite, "Show only on this timeframe (toggle)", 9);
-   MakeBtn("fb_lock", "LCK", 34, 24, C'40,40,56', clrWhite, "Lock", 8);
-   MakeBtn("fb_del",  "DEL", 34, 24, C'110,40,40', clrWhite, "Delete", 8);
+   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C_BTN, C_TEXT, "Fill on/off (box)", 10);
+   MakeBtn("fb_tf",   "TF", 28, 24, C_BTN, C_TEXT, "Show only on this timeframe (toggle)", 9);
+   MakeBtn("fb_lock", "LCK", 34, 24, C_BTN, C_TEXT, "Lock", 8);
+   MakeBtn("fb_del",  "DEL", 34, 24, C_DANGER_BG, C_SELL, "Delete", 8);
 
    // palette popup
-   MakeRectUI("pal_bg", C'30,30,44');
+   MakeRectUI("pal_bg", C_HEADER);
    for(int i = 0; i < 8; i++)
-      MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], clrWhite, "Color", 8);
+      MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], C_TEXT, "Color", 8);
 
    HideFB();
    PalHide();
@@ -1761,13 +1763,29 @@ void RenderToolbar()
    ArrayResize(g_bmp, w * h);
    ArrayInitialize(g_bmp, 0);
 
-   FillRR(w, h, 0, 0, w, h, 11.0, 0x3A4150, 200);          // thin border
-   FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, 0x161A22, 240);  // body
+   if(g_tbMin)
+   {
+      FillRR(w, h, 0, 0, w, h, 7.0, CM_RGB_BORDER, 200);
+      FillRR(w, h, 1, 1, w - 2, h - 2, 6.0, CM_RGB_BG, 240);
+      for(int gr = 0; gr < 3; gr++)
+         for(int gc = 0; gc < 2; gc++)
+            FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF8B9AAF);
+      FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EDF5, 255);
+      FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EDF5, 255);
+
+      g_tbIdx = 1 - g_tbIdx;
+      string miniRes = "::dp_tb" + IntegerToString(g_tbIdx);
+      ResourceCreate(miniRes, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
+      ObjectSetString(0, UI + "tb", OBJPROP_BMPFILE, miniRes);
+      return;
+   }
+   FillRR(w, h, 0, 0, w, h, 11.0, CM_RGB_BORDER, 200);          // thin border
+   FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, CM_RGB_BG, 240);  // body
 
    // drag handle (six dots)
    for(int gr = 0; gr < 3; gr++)
       for(int gc = 0; gc < 2; gc++)
-         FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 6.0, 1.5, 0xFF7A8296);
+         FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 6.0, 1.5, 0xFF8B9AAF);
 
    int n = ArraySize(I_id);
    for(int i = 0; i < n; i++)
@@ -1775,12 +1793,12 @@ void RenderToolbar()
       int cx = PADT + GRIP + (i % g_tbCols) * (CELL + CGAP);
       int cy = PADT + (i / g_tbCols) * (CELL + CGAP);
       bool act = ItemActive(i), hov = (i == g_hover);
-      if(act)      FillRR(w, h, cx, cy, CELL, CELL, 8.0, 0x2F6BFF, 255);
-      else if(hov) FillRR(w, h, cx, cy, CELL, CELL, 8.0, 0x2E3542, 255);
+      if(act)      FillRR(w, h, cx, cy, CELL, CELL, 8.0, CM_RGB_ACCENT_SOFT, 255);
+      else if(hov) FillRR(w, h, cx, cy, CELL, CELL, 8.0, CM_RGB_HOVER, 255);
 
       if(I_id[i] == "col")
       {
-         FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 9.5, 0xFFE6EAF2);
+         FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 9.5, 0xFFE6EDF5);
          FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 7.5, (uint)ColorToARGB(g_color, 255));
       }
       else
@@ -1797,8 +1815,13 @@ void RenderToolbar()
             }
       }
       if(i == 14 && (i % g_tbCols) > 0)    // separator between tools and actions
-         FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, 0x4A5264, 255);
+         FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, CM_RGB_BORDER, 255);
    }
+
+   // Dedicated minimize control at the right edge of the toolbar.
+   int minX = w - 19, minY = (h - 14) / 2;
+   FillRR(w, h, minX, minY, 14, 14, 4.0, CM_RGB_HOVER, 255);
+   FillRR(w, h, minX + 3, minY + 6, 8, 2, 0.5, 0xFFE6EDF5, 255);
 
    g_tbIdx = 1 - g_tbIdx;
    string res = "::dp_tb" + IntegerToString(g_tbIdx);
@@ -1811,11 +1834,13 @@ void LayoutToolbar()
    int W = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS);
    int H = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
    int n = ArraySize(I_id);
-   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP + CGAP) / (CELL + CGAP)));
+   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP - 22 + CGAP) / (CELL + CGAP)));
    int rows = (n + cols - 1) / cols;
    g_tbCols = cols;
-   g_tbW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
-   g_tbH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   int fullW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
+   int fullH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   g_tbW = g_tbMin ? 48 : fullW + 22;
+   g_tbH = g_tbMin ? 26 : fullH;
    g_tbX = InpLeft;
    g_tbY = H - InpBottom - g_tbH;
    if(g_tbMoved)
@@ -1849,6 +1874,15 @@ int ItemAt(int x, int y)
 }
 
 void HideTip() { ObjectSetInteger(0, UI + "tip", OBJPROP_TIMEFRAMES, OBJ_NO_PERIODS); }
+
+void DPP_SetMinimized(const bool minimized)
+{
+   if(g_tbMin==minimized) return;
+   g_tbMin=minimized;
+   g_hover=-1;
+   HideTip();
+   LayoutToolbar();
+}
 
 void ShowTip(int i)
 {
@@ -1906,6 +1940,7 @@ bool DragToolbar(int x, int y, int flags)
    g_tbCY = g_tbY;
    GlobalVariableSet("DPN_tbx", g_tbCX);
    GlobalVariableSet("DPN_tby", g_tbCY);
+   GlobalVariablesFlush();
    ChartSetInteger(0, CHART_MOUSE_SCROLL, g_prevScroll != 0);
    return false;
 }
@@ -2241,7 +2276,7 @@ void MakeLS(string base, datetime t1, double entry, double sl)
       ObjectSetInteger(0, rects[i], OBJPROP_SELECTED, false);
       ObjectSetInteger(0, rects[i], OBJPROP_HIDDEN, false);
    }
-   ObjectSetInteger(0, lbn, OBJPROP_COLOR, clrWhite);
+   ObjectSetInteger(0, lbn, OBJPROP_COLOR, C_TEXT);
    ObjectSetInteger(0, lbn, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, lbn, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, lbn, OBJPROP_SELECTED, false);
@@ -3089,37 +3124,37 @@ void MkBtnLs(string id, string text, int w, int h, color bg, color fg, string ti
 void CreateList()
 {
    ArrayResize(g_lsIds, 0);
-   MakeRectUI("ls_bg", C'20,22,32');
+   MakeRectUI("ls_bg", C_BG);
    LsAdd("ls_bg");
-   MkLabelUI("ls_title", "OBJECTS", clrWhite, 9);
-   MkBtnLs("ls_close", "x", 20, 18, C'30,30,46', clrTomato, "Close");
-   MkLabelUI("ls_hint", "", clrGray, 7);
-   MkBtnLs("ls_auto", "", LSW - 16, 22, C'30,40,90', clrWhite, "Convert native MT5 drawings (default names) to panel style");
-   MkLabelUI("ls_sel", "SELECTED: 0", clrWhite, 8);
-   MkBtnLs("ls_only", "Only", 158, 22, C'30,40,90', clrWhite, "Show selected only on this timeframe");
-   MkBtnLs("ls_alltf", "All TFs", 158, 22, C'40,40,56', clrWhite, "Show selected on all timeframes");
-   MkBtnLs("ls_style", "Apply line style", 104, 22, C'40,40,56', clrWhite, "Apply current color / width / style to the selected");
-   MkBtnLs("ls_delsel", "Delete selected", 104, 22, C'40,40,56', clrTomato, "Delete the selected");
-   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C'40,40,56', clrWhite, "Clear selection");
+   MkLabelUI("ls_title", "OBJECTS", C_TEXT, 9);
+   MkBtnLs("ls_close", "x", 20, 18, C_DANGER_BG, C_SELL, "Close");
+   MkLabelUI("ls_hint", "", C_MUTED, 7);
+   MkBtnLs("ls_auto", "", LSW - 16, 22, C_ACCENT_SOFT, C_TEXT, "Convert native MT5 drawings (default names) to panel style");
+   MkLabelUI("ls_sel", "SELECTED: 0", C_TEXT, 8);
+   MkBtnLs("ls_only", "Only", 158, 22, C_ACCENT_SOFT, C_TEXT, "Show selected only on this timeframe");
+   MkBtnLs("ls_alltf", "All TFs", 158, 22, C_BTN, C_TEXT, "Show selected on all timeframes");
+   MkBtnLs("ls_style", "Apply line style", 104, 22, C_BTN, C_TEXT, "Apply current color / width / style to the selected");
+   MkBtnLs("ls_delsel", "Delete selected", 104, 22, C_DANGER_BG, C_SELL, "Delete the selected");
+   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C_BTN, C_TEXT, "Clear selection");
 
    for(int r = 0; r < InpListRows; r++)
    {
       string k = IntegerToString(r);
-      MkBtnLs("ls_c" + k, "", 20, 20, C'40,40,56', clrWhite, "Select");
+      MkBtnLs("ls_c" + k, "", 20, 20, C_BTN, C_TEXT, "Select");
       MakeRectUI("ls_k" + k, clrDodgerBlue);
       LsAdd("ls_k" + k);
-      MkBtnLs("ls_n" + k, "", 148, 20, C'30,32,46', clrWhite, "Click to select on chart");
-      MkBtnLs("ls_t" + k, "", 46, 20, C'40,40,56', clrWhite, "Only on this timeframe");
-      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C'40,40,56', clrWhite, "All timeframes");
-      MkBtnLs("ls_x" + k, "x", 22, 20, C'30,32,46', clrTomato, "Delete");
+      MkBtnLs("ls_n" + k, "", 148, 20, C_CARD, C_TEXT, "Click to select on chart");
+      MkBtnLs("ls_t" + k, "", 46, 20, C_BTN, C_TEXT, "Only on this timeframe");
+      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C_BTN, C_TEXT, "All timeframes");
+      MkBtnLs("ls_x" + k, "x", 22, 20, C_DANGER_BG, C_SELL, "Delete");
    }
 
-   MkBtnLs("ls_prev", "<", 26, 22, C'40,40,56', clrWhite, "Previous page");
-   MkBtnLs("ls_next", ">", 26, 22, C'40,40,56', clrWhite, "Next page");
-   MkLabelUI("ls_page", "Page 1 / 1", clrSilver, 8);
-   MkBtnLs("ls_all", "All", 34, 22, C'40,40,56', clrWhite, "Select all");
-   MkBtnLs("ls_none", "None", 44, 22, C'40,40,56', clrWhite, "Select none");
-   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C'40,40,56', clrWhite, "Make every drawing visible on all timeframes");
+   MkBtnLs("ls_prev", "<", 26, 22, C_BTN, C_TEXT, "Previous page");
+   MkBtnLs("ls_next", ">", 26, 22, C_BTN, C_TEXT, "Next page");
+   MkLabelUI("ls_page", "Page 1 / 1", C_MUTED, 8);
+   MkBtnLs("ls_all", "All", 34, 22, C_BTN, C_TEXT, "Select all");
+   MkBtnLs("ls_none", "None", 44, 22, C_BTN, C_TEXT, "Select none");
+   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C_BTN, C_TEXT, "Make every drawing visible on all timeframes");
    ShowList(false);
 }
 
@@ -3205,7 +3240,7 @@ void RefreshList()
    ObjectSetString(0, UI + "ls_title", OBJPROP_TEXT, "OBJECTS  (" + IntegerToString(n) + ")");
    ObjectSetString(0, UI + "ls_hint", OBJPROP_TEXT, "Chart: " + TfName() + "    Tick a row to select");
    ObjectSetString(0, UI + "ls_auto", OBJPROP_TEXT, "Auto-convert new MT5 drawings to panel style: " + (g_lsAuto ? "ON" : "OFF"));
-   ObjectSetInteger(0, UI + "ls_auto", OBJPROP_BGCOLOR, g_lsAuto ? C'30,50,120' : C'40,40,56');
+   ObjectSetInteger(0, UI + "ls_auto", OBJPROP_BGCOLOR, g_lsAuto ? C_ACCENT_SOFT : C_BTN);
    ObjectSetString(0, UI + "ls_sel", OBJPROP_TEXT, "SELECTED: " + IntegerToString(ArraySize(g_lsSel)));
    ObjectSetString(0, UI + "ls_only", OBJPROP_TEXT, "Only " + TfName());
    ObjectSetString(0, UI + "ls_page", OBJPROP_TEXT, "Page " + IntegerToString(g_lsPage + 1) + " / " + IntegerToString(pages));
@@ -3223,12 +3258,12 @@ void RefreshList()
       bool sel = InList(g_lsSel, rep);
       long tfv = ObjectGetInteger(0, rep, OBJPROP_TIMEFRAMES);
       ObjectSetString(0, UI + "ls_c" + k, OBJPROP_TEXT, sel ? Sym(0x2713) : "");
-      ObjectSetInteger(0, UI + "ls_c" + k, OBJPROP_BGCOLOR, sel ? C'30,80,220' : C'40,40,56');
+      ObjectSetInteger(0, UI + "ls_c" + k, OBJPROP_BGCOLOR, sel ? C_ACCENT_SOFT : C_BTN);
       ObjectSetInteger(0, UI + "ls_k" + k, OBJPROP_BGCOLOR, (color)ObjectGetInteger(0, rep, OBJPROP_COLOR));
       ObjectSetString(0, UI + "ls_n" + k, OBJPROP_TEXT, EntryTitle(rep));
       ObjectSetString(0, UI + "ls_t" + k, OBJPROP_TEXT, TfName());
-      ObjectSetInteger(0, UI + "ls_t" + k, OBJPROP_BGCOLOR, (tfv == TfFlag()) ? C'30,80,220' : C'40,40,56');
-      ObjectSetInteger(0, UI + "ls_a" + k, OBJPROP_BGCOLOR, (tfv == OBJ_ALL_PERIODS) ? C'30,80,220' : C'40,40,56');
+      ObjectSetInteger(0, UI + "ls_t" + k, OBJPROP_BGCOLOR, (tfv == TfFlag()) ? C_ACCENT_SOFT : C_BTN);
+      ObjectSetInteger(0, UI + "ls_a" + k, OBJPROP_BGCOLOR, (tfv == OBJ_ALL_PERIODS) ? C_ACCENT_SOFT : C_BTN);
    }
    g_lsSig = ListSig(ent);
    ChartRedraw(0);
@@ -3704,6 +3739,14 @@ void ToolbarClick(int x, int y)
    ulong now = GetTickCount64();
    if(now - g_lastTbClick < 200) return;     // OBJECT_CLICK and CLICK can both fire
    g_lastTbClick = now;
+   if(InRect(x, y, g_tbX + g_tbW - 20, g_tbY + (g_tbH - 18) / 2, 18, 18))
+   {
+      g_tbMin = !g_tbMin;
+      g_hover = -1;
+      HideTip();
+      LayoutToolbar();
+      return;
+   }
    int i = ItemAt(x, y);
    if(i < 0) return;
    HandleUI(I_id[i]);

@@ -92,24 +92,40 @@ input int    InpPanelY           = 25;       // Panel Y
 #define NEWS_ROWS 6
 #define HEADLINE_ROWS 4
 
-//--- palette
-#define C_BG        C'16,20,31'
-#define C_HEADER    C'24,31,52'
-#define C_CARD      C'25,31,48'
-#define C_BORDER    C'44,54,84'
-#define C_TEXT      C'226,232,245'
-#define C_MUTED     C'128,140,170'
-#define C_ACCENT    C'0,214,160'
-#define C_BUY       C'0,172,112'
-#define C_SELL      C'226,62,87'
-#define C_WARN      C'255,170,50'
-#define C_BTN       C'44,56,92'
-#define C_BAR_BG    C'35,43,68'
-#define C_BLIMIT    C'0,122,92'
-#define C_SLIMIT    C'168,48,72'
-#define C_BSTOP     C'0,140,170'
-#define C_SSTOP     C'205,112,40'
-#define C_ENTRY     C'90,170,255'
+//--- shared design system: MIDNIGHT TEAL
+// Layered surfaces
+#define C_BG           C'11,17,27'
+#define C_HEADER       C'19,33,49'
+#define C_CARD         C'23,38,56'
+#define C_BAR_BG       C'26,42,61'
+#define C_BTN          C'35,50,70'
+#define C_BORDER       C'47,64,84'
+
+// Typography and semantic accents
+#define C_TEXT         C'230,237,245'
+#define C_MUTED        C'139,154,175'
+#define C_ACCENT       C'45,212,191'
+#define C_ACCENT_SOFT  C'23,74,73'
+#define C_BUY          C'34,185,130'
+#define C_SELL         C'228,90,107'
+#define C_DANGER_BG    C'73,43,56'
+#define C_WARN         C'240,180,92'
+#define C_ENTRY        C'106,175,255'
+
+// Order-type states: distinct, restrained colors
+#define C_BLIMIT       C'31,135,103'
+#define C_SLIMIT       C'157,66,86'
+#define C_BSTOP        C'35,126,150'
+#define C_SSTOP        C'168,111,53'
+
+// Raw RGB tokens for the DrawPanelPro bitmap renderer (0xRRGGBB)
+#define CM_RGB_BG            0x0B111B
+#define CM_RGB_BORDER        0x2F4054
+#define CM_RGB_TEXT          0xE6EDF5
+#define CM_RGB_MUTED         0x8B9AAF
+#define CM_RGB_ACCENT        0x2DD4BF
+#define CM_RGB_ACCENT_SOFT   0x174A49
+#define CM_RGB_HOVER         0x233246
 
 CTrade trade;
 
@@ -126,6 +142,11 @@ string gWarn       = "";
 string gLastReason = "";
 int    gPanelH     = 0;
 bool   gMin        = false;
+int    gPanelX     = 0;
+int    gPanelY     = 0;
+bool   gPanelDragging=false;
+int    gPanelDragDX=0,gPanelDragDY=0;
+long   gPanelPrevScroll=1;
 int    gTab        = 0;      // active management view: Account, Setup, Trade, Manage
 int    gCurTab     = -1;     // tab currently being built
 int    gTabH[4];             // panel height per tab
@@ -1621,6 +1642,7 @@ string    g_ovr[];
 bool      g_useOverride = false;
 int       g_hover = -1, g_tbIdx = 0, g_tbCols = 1;
 bool      g_tbMoved = false, g_drag = false;
+bool      g_tbMin = false;
 int       g_tbCX = 0, g_tbCY = 0, g_dragDX = 0, g_dragDY = 0;
 long      g_prevScroll = 1;
 uint      g_bmp[];
@@ -1788,7 +1810,7 @@ void MakeBtn(string id, string text, int w, int h, color bg, color fg, string ti
    ObjectSetString(0, name, OBJPROP_FONT, FONT_UI);
    ObjectSetInteger(0, name, OBJPROP_COLOR, fg);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
-   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C'70,70,90');
+   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, fs);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
@@ -1813,7 +1835,7 @@ void MakeRectUI(string id, color bg)
    if(ObjectFind(0, name) < 0) ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
    ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
-   ObjectSetInteger(0, name, OBJPROP_COLOR, C'70,70,90');
+   ObjectSetInteger(0, name, OBJPROP_COLOR, C_BORDER);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
 }
@@ -1835,9 +1857,9 @@ void CreateUI()
    ObjectSetInteger(0, tip, OBJPROP_READONLY, true);
    ObjectSetInteger(0, tip, OBJPROP_XSIZE, 120);
    ObjectSetInteger(0, tip, OBJPROP_YSIZE, 20);
-   ObjectSetInteger(0, tip, OBJPROP_COLOR, clrWhite);
-   ObjectSetInteger(0, tip, OBJPROP_BGCOLOR, C'20,24,32');
-   ObjectSetInteger(0, tip, OBJPROP_BORDER_COLOR, C'70,70,90');
+   ObjectSetInteger(0, tip, OBJPROP_COLOR, C_TEXT);
+   ObjectSetInteger(0, tip, OBJPROP_BGCOLOR, C_CARD);
+   ObjectSetInteger(0, tip, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetString(0, tip, OBJPROP_FONT, "Segoe UI");
    ObjectSetInteger(0, tip, OBJPROP_FONTSIZE, 8);
    ObjectSetInteger(0, tip, OBJPROP_ALIGN, ALIGN_CENTER);
@@ -1846,29 +1868,30 @@ void CreateUI()
    ObjectSetInteger(0, tip, OBJPROP_TIMEFRAMES, OBJ_NO_PERIODS);
 
    // floating edit bar
-   MakeRectUI("fb_bg", C'30,30,44');
-   MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, clrWhite, "Color", 10);
-   MakeBtn("fb_wid",  "2px", 44, 24, C'40,40,56', clrWhite, "Line width", 9);
-   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C'40,40,56', clrWhite, "Line style", 10);
+   MakeRectUI("fb_bg", C_HEADER);
+   MakeBtn("fb_col",  Sym(0x25CF), 28, 24, g_color, C_TEXT, "Color", 10);
+   MakeBtn("fb_wid",  "2px", 44, 24, C_BTN, C_TEXT, "Line width", 9);
+   MakeBtn("fb_sty",  Sym(0x2501), 28, 24, C_BTN, C_TEXT, "Line style", 10);
    string te = UI + "fb_txt";
    if(ObjectFind(0, te) < 0) ObjectCreate(0, te, OBJ_EDIT, 0, 0, 0);
    ObjectSetInteger(0, te, OBJPROP_XSIZE, 92);
    ObjectSetInteger(0, te, OBJPROP_YSIZE, 24);
    ObjectSetString(0, te, OBJPROP_TEXT, "");
-   ObjectSetInteger(0, te, OBJPROP_COLOR, clrBlack);
-   ObjectSetInteger(0, te, OBJPROP_BGCOLOR, clrWhite);
+   ObjectSetInteger(0, te, OBJPROP_COLOR, C_TEXT);
+   ObjectSetInteger(0, te, OBJPROP_BGCOLOR, C_CARD);
+   ObjectSetInteger(0, te, OBJPROP_BORDER_COLOR, C_BORDER);
    ObjectSetInteger(0, te, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, te, OBJPROP_HIDDEN, true);
    ObjectSetString(0, te, OBJPROP_TOOLTIP, "Text on the line / text object (press Enter)");
-   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C'40,40,56', clrWhite, "Fill on/off (box)", 10);
-   MakeBtn("fb_tf",   "TF", 28, 24, C'40,40,56', clrWhite, "Show only on this timeframe (toggle)", 9);
-   MakeBtn("fb_lock", "LCK", 34, 24, C'40,40,56', clrWhite, "Lock", 8);
-   MakeBtn("fb_del",  "DEL", 34, 24, C'110,40,40', clrWhite, "Delete", 8);
+   MakeBtn("fb_fill", Sym(0x25A6), 28, 24, C_BTN, C_TEXT, "Fill on/off (box)", 10);
+   MakeBtn("fb_tf",   "TF", 28, 24, C_BTN, C_TEXT, "Show only on this timeframe (toggle)", 9);
+   MakeBtn("fb_lock", "LCK", 34, 24, C_BTN, C_TEXT, "Lock", 8);
+   MakeBtn("fb_del",  "DEL", 34, 24, C_DANGER_BG, C_SELL, "Delete", 8);
 
    // palette popup
-   MakeRectUI("pal_bg", C'30,30,44');
+   MakeRectUI("pal_bg", C_HEADER);
    for(int i = 0; i < 8; i++)
-      MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], clrWhite, "Color", 8);
+      MakeBtn("pal" + IntegerToString(i), "", 22, 22, PAL[i], C_TEXT, "Color", 8);
 
    HideFB();
    PalHide();
@@ -1954,13 +1977,29 @@ void RenderToolbar()
    ArrayResize(g_bmp, w * h);
    ArrayInitialize(g_bmp, 0);
 
-   FillRR(w, h, 0, 0, w, h, 11.0, 0x3A4150, 200);          // thin border
-   FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, 0x161A22, 240);  // body
+   if(g_tbMin)
+   {
+      FillRR(w, h, 0, 0, w, h, 7.0, CM_RGB_BORDER, 200);
+      FillRR(w, h, 1, 1, w - 2, h - 2, 6.0, CM_RGB_BG, 240);
+      for(int gr = 0; gr < 3; gr++)
+         for(int gc = 0; gc < 2; gc++)
+            FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 5.0, 1.4, 0xFF8B9AAF);
+      FillRR(w, h, w - 20, h / 2 - 1, 10, 2, 0.5, 0xFFE6EDF5, 255);
+      FillRR(w, h, w - 16, h / 2 - 5, 2, 10, 0.5, 0xFFE6EDF5, 255);
+
+      g_tbIdx = 1 - g_tbIdx;
+      string miniRes = "::dp_tb" + IntegerToString(g_tbIdx);
+      ResourceCreate(miniRes, g_bmp, w, h, 0, 0, w, COLOR_FORMAT_ARGB_NORMALIZE);
+      ObjectSetString(0, UI + "tb", OBJPROP_BMPFILE, miniRes);
+      return;
+   }
+   FillRR(w, h, 0, 0, w, h, 11.0, CM_RGB_BORDER, 200);          // thin border
+   FillRR(w, h, 1, 1, w - 2, h - 2, 10.0, CM_RGB_BG, 240);  // body
 
    // drag handle (six dots)
    for(int gr = 0; gr < 3; gr++)
       for(int gc = 0; gc < 2; gc++)
-         FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 6.0, 1.5, 0xFF7A8296);
+         FillDot(w, h, 9.0 + gc * 5.0, h / 2.0 + (gr - 1) * 6.0, 1.5, 0xFF8B9AAF);
 
    int n = ArraySize(I_id);
    for(int i = 0; i < n; i++)
@@ -1968,12 +2007,12 @@ void RenderToolbar()
       int cx = PADT + GRIP + (i % g_tbCols) * (CELL + CGAP);
       int cy = PADT + (i / g_tbCols) * (CELL + CGAP);
       bool act = ItemActive(i), hov = (i == g_hover);
-      if(act)      FillRR(w, h, cx, cy, CELL, CELL, 8.0, 0x2F6BFF, 255);
-      else if(hov) FillRR(w, h, cx, cy, CELL, CELL, 8.0, 0x2E3542, 255);
+      if(act)      FillRR(w, h, cx, cy, CELL, CELL, 8.0, CM_RGB_ACCENT_SOFT, 255);
+      else if(hov) FillRR(w, h, cx, cy, CELL, CELL, 8.0, CM_RGB_HOVER, 255);
 
       if(I_id[i] == "col")
       {
-         FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 9.5, 0xFFE6EAF2);
+         FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 9.5, 0xFFE6EDF5);
          FillDot(w, h, cx + CELL / 2.0, cy + CELL / 2.0, 7.5, (uint)ColorToARGB(g_color, 255));
       }
       else
@@ -1990,8 +2029,13 @@ void RenderToolbar()
             }
       }
       if(i == 14 && (i % g_tbCols) > 0)    // separator between tools and actions
-         FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, 0x4A5264, 255);
+         FillRR(w, h, cx - 2, cy + 6, 1, CELL - 12, 0.5, CM_RGB_BORDER, 255);
    }
+
+   // Dedicated minimize control at the right edge of the toolbar.
+   int minX = w - 19, minY = (h - 14) / 2;
+   FillRR(w, h, minX, minY, 14, 14, 4.0, CM_RGB_HOVER, 255);
+   FillRR(w, h, minX + 3, minY + 6, 8, 2, 0.5, 0xFFE6EDF5, 255);
 
    g_tbIdx = 1 - g_tbIdx;
    string res = "::dp_tb" + IntegerToString(g_tbIdx);
@@ -2004,11 +2048,13 @@ void LayoutToolbar()
    int W = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS);
    int H = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
    int n = ArraySize(I_id);
-   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP + CGAP) / (CELL + CGAP)));
+   int cols = MathMax(1, MathMin(n, (W - 2 * InpLeft - 2 * PADT - GRIP - 22 + CGAP) / (CELL + CGAP)));
    int rows = (n + cols - 1) / cols;
    g_tbCols = cols;
-   g_tbW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
-   g_tbH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   int fullW = 2 * PADT + GRIP + cols * (CELL + CGAP) - CGAP;
+   int fullH = 2 * PADT + rows * (CELL + CGAP) - CGAP;
+   g_tbW = g_tbMin ? 48 : fullW + 22;
+   g_tbH = g_tbMin ? 26 : fullH;
    g_tbX = InpLeft;
    g_tbY = H - InpBottom - g_tbH;
    if(g_tbMoved)
@@ -2042,6 +2088,15 @@ int ItemAt(int x, int y)
 }
 
 void HideTip() { ObjectSetInteger(0, UI + "tip", OBJPROP_TIMEFRAMES, OBJ_NO_PERIODS); }
+
+void DPP_SetMinimized(const bool minimized)
+{
+   if(g_tbMin==minimized) return;
+   g_tbMin=minimized;
+   g_hover=-1;
+   HideTip();
+   LayoutToolbar();
+}
 
 void ShowTip(int i)
 {
@@ -2099,6 +2154,7 @@ bool DragToolbar(int x, int y, int flags)
    g_tbCY = g_tbY;
    GlobalVariableSet("DPN_tbx", g_tbCX);
    GlobalVariableSet("DPN_tby", g_tbCY);
+   GlobalVariablesFlush();
    ChartSetInteger(0, CHART_MOUSE_SCROLL, g_prevScroll != 0);
    return false;
 }
@@ -2434,7 +2490,7 @@ void MakeLS(string base, datetime t1, double entry, double sl)
       ObjectSetInteger(0, rects[i], OBJPROP_SELECTED, false);
       ObjectSetInteger(0, rects[i], OBJPROP_HIDDEN, false);
    }
-   ObjectSetInteger(0, lbn, OBJPROP_COLOR, clrWhite);
+   ObjectSetInteger(0, lbn, OBJPROP_COLOR, C_TEXT);
    ObjectSetInteger(0, lbn, OBJPROP_FONTSIZE, 9);
    ObjectSetInteger(0, lbn, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, lbn, OBJPROP_SELECTED, false);
@@ -3282,37 +3338,37 @@ void MkBtnLs(string id, string text, int w, int h, color bg, color fg, string ti
 void CreateList()
 {
    ArrayResize(g_lsIds, 0);
-   MakeRectUI("ls_bg", C'20,22,32');
+   MakeRectUI("ls_bg", C_BG);
    LsAdd("ls_bg");
-   MkLabelUI("ls_title", "OBJECTS", clrWhite, 9);
-   MkBtnLs("ls_close", "x", 20, 18, C'30,30,46', clrTomato, "Close");
-   MkLabelUI("ls_hint", "", clrGray, 7);
-   MkBtnLs("ls_auto", "", LSW - 16, 22, C'30,40,90', clrWhite, "Convert native MT5 drawings (default names) to panel style");
-   MkLabelUI("ls_sel", "SELECTED: 0", clrWhite, 8);
-   MkBtnLs("ls_only", "Only", 158, 22, C'30,40,90', clrWhite, "Show selected only on this timeframe");
-   MkBtnLs("ls_alltf", "All TFs", 158, 22, C'40,40,56', clrWhite, "Show selected on all timeframes");
-   MkBtnLs("ls_style", "Apply line style", 104, 22, C'40,40,56', clrWhite, "Apply current color / width / style to the selected");
-   MkBtnLs("ls_delsel", "Delete selected", 104, 22, C'40,40,56', clrTomato, "Delete the selected");
-   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C'40,40,56', clrWhite, "Clear selection");
+   MkLabelUI("ls_title", "OBJECTS", C_TEXT, 9);
+   MkBtnLs("ls_close", "x", 20, 18, C_DANGER_BG, C_SELL, "Close");
+   MkLabelUI("ls_hint", "", C_MUTED, 7);
+   MkBtnLs("ls_auto", "", LSW - 16, 22, C_ACCENT_SOFT, C_TEXT, "Convert native MT5 drawings (default names) to panel style");
+   MkLabelUI("ls_sel", "SELECTED: 0", C_TEXT, 8);
+   MkBtnLs("ls_only", "Only", 158, 22, C_ACCENT_SOFT, C_TEXT, "Show selected only on this timeframe");
+   MkBtnLs("ls_alltf", "All TFs", 158, 22, C_BTN, C_TEXT, "Show selected on all timeframes");
+   MkBtnLs("ls_style", "Apply line style", 104, 22, C_BTN, C_TEXT, "Apply current color / width / style to the selected");
+   MkBtnLs("ls_delsel", "Delete selected", 104, 22, C_DANGER_BG, C_SELL, "Delete the selected");
+   MkBtnLs("ls_clrsel", "Clear selection", 108, 22, C_BTN, C_TEXT, "Clear selection");
 
    for(int r = 0; r < InpListRows; r++)
    {
       string k = IntegerToString(r);
-      MkBtnLs("ls_c" + k, "", 20, 20, C'40,40,56', clrWhite, "Select");
+      MkBtnLs("ls_c" + k, "", 20, 20, C_BTN, C_TEXT, "Select");
       MakeRectUI("ls_k" + k, clrDodgerBlue);
       LsAdd("ls_k" + k);
-      MkBtnLs("ls_n" + k, "", 148, 20, C'30,32,46', clrWhite, "Click to select on chart");
-      MkBtnLs("ls_t" + k, "", 46, 20, C'40,40,56', clrWhite, "Only on this timeframe");
-      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C'40,40,56', clrWhite, "All timeframes");
-      MkBtnLs("ls_x" + k, "x", 22, 20, C'30,32,46', clrTomato, "Delete");
+      MkBtnLs("ls_n" + k, "", 148, 20, C_CARD, C_TEXT, "Click to select on chart");
+      MkBtnLs("ls_t" + k, "", 46, 20, C_BTN, C_TEXT, "Only on this timeframe");
+      MkBtnLs("ls_a" + k, "All TFs", 60, 20, C_BTN, C_TEXT, "All timeframes");
+      MkBtnLs("ls_x" + k, "x", 22, 20, C_DANGER_BG, C_SELL, "Delete");
    }
 
-   MkBtnLs("ls_prev", "<", 26, 22, C'40,40,56', clrWhite, "Previous page");
-   MkBtnLs("ls_next", ">", 26, 22, C'40,40,56', clrWhite, "Next page");
-   MkLabelUI("ls_page", "Page 1 / 1", clrSilver, 8);
-   MkBtnLs("ls_all", "All", 34, 22, C'40,40,56', clrWhite, "Select all");
-   MkBtnLs("ls_none", "None", 44, 22, C'40,40,56', clrWhite, "Select none");
-   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C'40,40,56', clrWhite, "Make every drawing visible on all timeframes");
+   MkBtnLs("ls_prev", "<", 26, 22, C_BTN, C_TEXT, "Previous page");
+   MkBtnLs("ls_next", ">", 26, 22, C_BTN, C_TEXT, "Next page");
+   MkLabelUI("ls_page", "Page 1 / 1", C_MUTED, 8);
+   MkBtnLs("ls_all", "All", 34, 22, C_BTN, C_TEXT, "Select all");
+   MkBtnLs("ls_none", "None", 44, 22, C_BTN, C_TEXT, "Select none");
+   MkBtnLs("ls_showall", "Show all on all TFs", 108, 22, C_BTN, C_TEXT, "Make every drawing visible on all timeframes");
    ShowList(false);
 }
 
@@ -3398,7 +3454,7 @@ void RefreshList()
    ObjectSetString(0, UI + "ls_title", OBJPROP_TEXT, "OBJECTS  (" + IntegerToString(n) + ")");
    ObjectSetString(0, UI + "ls_hint", OBJPROP_TEXT, "Chart: " + TfName() + "    Tick a row to select");
    ObjectSetString(0, UI + "ls_auto", OBJPROP_TEXT, "Auto-convert new MT5 drawings to panel style: " + (g_lsAuto ? "ON" : "OFF"));
-   ObjectSetInteger(0, UI + "ls_auto", OBJPROP_BGCOLOR, g_lsAuto ? C'30,50,120' : C'40,40,56');
+   ObjectSetInteger(0, UI + "ls_auto", OBJPROP_BGCOLOR, g_lsAuto ? C_ACCENT_SOFT : C_BTN);
    ObjectSetString(0, UI + "ls_sel", OBJPROP_TEXT, "SELECTED: " + IntegerToString(ArraySize(g_lsSel)));
    ObjectSetString(0, UI + "ls_only", OBJPROP_TEXT, "Only " + TfName());
    ObjectSetString(0, UI + "ls_page", OBJPROP_TEXT, "Page " + IntegerToString(g_lsPage + 1) + " / " + IntegerToString(pages));
@@ -3416,12 +3472,12 @@ void RefreshList()
       bool sel = InList(g_lsSel, rep);
       long tfv = ObjectGetInteger(0, rep, OBJPROP_TIMEFRAMES);
       ObjectSetString(0, UI + "ls_c" + k, OBJPROP_TEXT, sel ? Sym(0x2713) : "");
-      ObjectSetInteger(0, UI + "ls_c" + k, OBJPROP_BGCOLOR, sel ? C'30,80,220' : C'40,40,56');
+      ObjectSetInteger(0, UI + "ls_c" + k, OBJPROP_BGCOLOR, sel ? C_ACCENT_SOFT : C_BTN);
       ObjectSetInteger(0, UI + "ls_k" + k, OBJPROP_BGCOLOR, (color)ObjectGetInteger(0, rep, OBJPROP_COLOR));
       ObjectSetString(0, UI + "ls_n" + k, OBJPROP_TEXT, EntryTitle(rep));
       ObjectSetString(0, UI + "ls_t" + k, OBJPROP_TEXT, TfName());
-      ObjectSetInteger(0, UI + "ls_t" + k, OBJPROP_BGCOLOR, (tfv == TfFlag()) ? C'30,80,220' : C'40,40,56');
-      ObjectSetInteger(0, UI + "ls_a" + k, OBJPROP_BGCOLOR, (tfv == OBJ_ALL_PERIODS) ? C'30,80,220' : C'40,40,56');
+      ObjectSetInteger(0, UI + "ls_t" + k, OBJPROP_BGCOLOR, (tfv == TfFlag()) ? C_ACCENT_SOFT : C_BTN);
+      ObjectSetInteger(0, UI + "ls_a" + k, OBJPROP_BGCOLOR, (tfv == OBJ_ALL_PERIODS) ? C_ACCENT_SOFT : C_BTN);
    }
    g_lsSig = ListSig(ent);
    ChartRedraw(0);
@@ -3897,6 +3953,14 @@ void ToolbarClick(int x, int y)
    ulong now = GetTickCount64();
    if(now - g_lastTbClick < 200) return;     // OBJECT_CLICK and CLICK can both fire
    g_lastTbClick = now;
+   if(InRect(x, y, g_tbX + g_tbW - 20, g_tbY + (g_tbH - 18) / 2, 18, 18))
+   {
+      g_tbMin = !g_tbMin;
+      g_hover = -1;
+      HideTip();
+      LayoutToolbar();
+      return;
+   }
    int i = ItemAt(x, y);
    if(i < 0) return;
    HandleUI(I_id[i]);
@@ -4040,6 +4104,58 @@ input bool InpSN_ShowHeadlines = true;    // Show GDELT headlines section
 #define SN_HEIGHT 510
 #define SN_NEWS_ROWS 4
 #define SN_HEADLINE_ROWS 2
+bool g_sn_minimized=false;
+int  g_sn_x=0,g_sn_y=0;
+bool g_sn_dragging=false;
+int  g_sn_drag_dx=0,g_sn_drag_dy=0;
+long g_sn_prev_scroll=1;
+
+// Keep the title bar and its toggle visible while the panel is collapsed.
+string SN_RTLText(const string value)
+{
+   bool rtl=false;
+   for(int i=0;i<StringLen(value);i++)
+   {
+      ushort ch=(ushort)StringGetCharacter(value,i);
+      if((ch>=0x0590 && ch<=0x08FF) || (ch>=0xFB1D && ch<=0xFEFC))
+      {
+         rtl=true;
+         break;
+      }
+   }
+   if(!rtl) return value;
+   string mark=ShortToString(0x200F);
+   return mark+value+mark;
+}
+
+void SN_ApplyMinimize();
+
+void SN_SetMinimized(const bool minimized)
+{
+   if(g_sn_minimized==minimized) return;
+   g_sn_minimized=minimized;
+   SN_ApplyMinimize();
+}
+
+void SN_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,SN_PREFIX)!=0) continue;
+      bool keep=(name==SN_PREFIX+"bg" || name==SN_PREFIX+"header" ||
+                 name==SN_PREFIX+"line" || name==SN_PREFIX+"title" ||
+                 name==SN_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_sn_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,SN_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,SN_PREFIX+"bg",OBJPROP_YSIZE,g_sn_minimized?44:SN_HEIGHT);
+   if(ObjectFind(0,SN_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,SN_PREFIX+"btn_min",OBJPROP_TEXT,g_sn_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 //--- UI helpers
 void SN_Rect(string id,int x,int y,int w,int h,color bg,color border)
@@ -4077,10 +4193,11 @@ void SN_Label(string id,int x,int y,string value,color clr,int size=8,
    ObjectSetInteger(0,n,OBJPROP_ANCHOR,anchor);
    ObjectSetInteger(0,n,OBJPROP_XDISTANCE,x);
    ObjectSetInteger(0,n,OBJPROP_YDISTANCE,y);
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,SN_RTLText(value));
    ObjectSetString(0,n,OBJPROP_FONT,font);
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,size);
    ObjectSetInteger(0,n,OBJPROP_COLOR,clr);
+   ObjectSetInteger(0,n,OBJPROP_ANCHOR,anchor);
    ObjectSetInteger(0,n,OBJPROP_SELECTABLE,false);
    ObjectSetInteger(0,n,OBJPROP_HIDDEN,true);
    ObjectSetInteger(0,n,OBJPROP_BACK,false);
@@ -4091,7 +4208,7 @@ void SN_SetLabel(string id,string value,color clr)
 {
    string n=SN_PREFIX+id;
    if(ObjectFind(0,n)<0) return;
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,SN_RTLText(value));
    ObjectSetInteger(0,n,OBJPROP_COLOR,clr);
 }
 
@@ -4108,7 +4225,7 @@ void SN_Button(string id,int x,int y,int w,int h,string value)
    ObjectSetInteger(0,n,OBJPROP_YDISTANCE,y);
    ObjectSetInteger(0,n,OBJPROP_XSIZE,w);
    ObjectSetInteger(0,n,OBJPROP_YSIZE,h);
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,SN_RTLText(value));
    ObjectSetString(0,n,OBJPROP_FONT,"Tahoma");
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,8);
    ObjectSetInteger(0,n,OBJPROP_COLOR,C_TEXT);
@@ -4284,48 +4401,49 @@ string SN_FormatCalendarValue(bool available,double value,int digits)
 
 void SN_CreatePanel()
 {
-   int x=InpSN_X, y=InpSN_Y, pad=13;
+   int x=g_sn_x, y=g_sn_y, pad=13;
    SN_Rect("bg",x,y,SN_WIDTH,SN_HEIGHT,C_BG,C_BORDER);
    SN_Rect("header",x,y,SN_WIDTH,42,C_HEADER,C_HEADER);
    SN_Rect("line",x,y+42,SN_WIDTH,2,C_ACCENT,C_ACCENT);
-   SN_Label("title",x+pad,y+11,"سشن‌ها و اخبار اقتصادی",C_TEXT,11,"Tahoma");
-   SN_Button("btn_news_refresh",x+SN_WIDTH-91,y+9,78,24,"تازه‌سازی خبر");
+   SN_Label("title",x+SN_WIDTH-pad,y+11,"سشن‌ها و اخبار اقتصادی",C_TEXT,11,"Tahoma",ANCHOR_RIGHT_UPPER);
+   SN_Button("btn_min",x+pad,y+9,26,24,"–");
+   SN_Button("btn_news_refresh",x+pad+32,y+9,86,24,"تازه‌سازی خبر");
 
-   SN_Label("sessions_title",x+pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma");
-   SN_Rect("candle_chip",x+SN_WIDTH-160,y+50,147,24,C_CARD,C_BORDER);
-   SN_Label("candle_timer",x+SN_WIDTH-154,y+55,"کندل: در حال محاسبه...",C_ACCENT,8,"Tahoma");
+   SN_Label("sessions_title",x+SN_WIDTH-pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+   SN_Rect("candle_chip",x+pad,y+50,147,24,C_CARD,C_BORDER);
+   SN_Label("candle_timer",x+pad+140,y+55,"کندل: در حال محاسبه...",C_ACCENT,8,"Tahoma",ANCHOR_RIGHT_UPPER);
    string session_names[4]={"سیدنی","توکیو","لندن","نیویورک"};
    for(int i=0;i<4;i++)
    {
       int row_y=y+79+i*22;
-      SN_Label("session_name_"+IntegerToString(i),x+pad,row_y,session_names[i],C_TEXT,9,"Tahoma");
-      SN_Label("session_state_"+IntegerToString(i),x+108,row_y,"در حال محاسبه...",C_MUTED,8,"Tahoma");
+      SN_Label("session_name_"+IntegerToString(i),x+SN_WIDTH-pad,row_y,session_names[i],C_TEXT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("session_state_"+IntegerToString(i),x+SN_WIDTH-pad-88,row_y,"در حال محاسبه...",C_MUTED,8,"Tahoma",ANCHOR_RIGHT_UPPER);
    }
 
    SN_Rect("divider",x+pad,y+169,SN_WIDTH-2*pad,1,C_BORDER,C_BORDER);
-   SN_Label("calendar_title",x+pad,y+180,"تقویم اقتصادی",C_ACCENT,9,"Tahoma");
-   SN_Button("btn_headline_refresh",x+SN_WIDTH-91,y+175,78,23,"تیترهای جدید");
-   SN_Label("calendar_status",x+pad,y+202,"در حال دریافت اطلاعات تقویم...",C_MUTED,8,"Tahoma");
+   SN_Label("calendar_title",x+SN_WIDTH-pad,y+180,"تقویم اقتصادی",C_ACCENT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+   SN_Button("btn_headline_refresh",x+pad,y+175,86,23,"تیترهای جدید");
+   SN_Label("calendar_status",x+SN_WIDTH-pad,y+202,"در حال دریافت اطلاعات تقویم...",C_MUTED,8,"Tahoma",ANCHOR_RIGHT_UPPER);
    SN_Rect("news_card",x+pad-4,y+222,SN_WIDTH-2*pad+8,184,C_CARD,C_BORDER);
    for(int i=0;i<SN_NEWS_ROWS;i++)
    {
       int row_y=y+229+i*42;
-      SN_Label("news_meta_"+IntegerToString(i),x+pad+4,row_y,"-",C_WARN,8,"Tahoma");
-      SN_Label("news_title_"+IntegerToString(i),x+pad+4,row_y+14,"-",C_TEXT,9,"Tahoma");
-      SN_Label("news_values_"+IntegerToString(i),x+pad+4,row_y+27,"-",C_MUTED,7,"Tahoma");
+      SN_Label("news_meta_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y,"-",C_WARN,8,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("news_title_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y+14,"-",C_TEXT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("news_values_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y+27,"-",C_MUTED,7,"Tahoma",ANCHOR_RIGHT_UPPER);
       if(i<SN_NEWS_ROWS-1)
          SN_Rect("news_sep_"+IntegerToString(i),x+pad+4,row_y+40,SN_WIDTH-2*pad-8,1,C_BORDER,C_BORDER);
    }
 
    if(InpSN_ShowHeadlines)
    {
-      SN_Label("headlines_title",x+pad,y+414,"تیترهای جهانی",C_ACCENT,9,"Tahoma");
-      SN_Label("headlines_status",x+pad,y+434,"در حال دریافت تیترها...",C_MUTED,7,"Tahoma");
+      SN_Label("headlines_title",x+SN_WIDTH-pad,y+414,"تیترهای جهانی",C_ACCENT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("headlines_status",x+SN_WIDTH-pad,y+434,"در حال دریافت تیترها...",C_MUTED,7,"Tahoma",ANCHOR_RIGHT_UPPER);
       for(int i=0;i<SN_HEADLINE_ROWS;i++)
       {
          int row_y=y+453+i*23;
-         SN_Label("headline_title_"+IntegerToString(i),x+pad+4,row_y,"-",C_TEXT,8,"Tahoma");
-         SN_Label("headline_meta_"+IntegerToString(i),x+pad+4,row_y+13,"-",C_MUTED,7,"Tahoma");
+         SN_Label("headline_title_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y,"-",C_TEXT,8,"Tahoma",ANCHOR_RIGHT_UPPER);
+         SN_Label("headline_meta_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y+13,"-",C_MUTED,7,"Tahoma",ANCHOR_RIGHT_UPPER);
       }
    }
 }
@@ -4394,23 +4512,119 @@ void SN_UpdatePanel()
    }
 }
 
+
+string SN_PositionKey(const string axis)
+{
+   string symbol=_Symbol;
+   StringReplace(symbol,".","_");
+   StringReplace(symbol,"/","_");
+   return "CM_SESS_"+IntegerToString((int)AccountInfoInteger(ACCOUNT_LOGIN))+"_"+
+          symbol+"_"+IntegerToString((int)_Period)+"_"+axis;
+}
+
+void SN_LoadPosition()
+{
+   g_sn_x=InpSN_X;
+   g_sn_y=InpSN_Y;
+   string kx=SN_PositionKey("X");
+   string ky=SN_PositionKey("Y");
+   if(GlobalVariableCheck(kx)) g_sn_x=(int)GlobalVariableGet(kx);
+   if(GlobalVariableCheck(ky)) g_sn_y=(int)GlobalVariableGet(ky);
+}
+
+void SN_SavePosition()
+{
+   GlobalVariableSet(SN_PositionKey("X"),g_sn_x);
+   GlobalVariableSet(SN_PositionKey("Y"),g_sn_y);
+   GlobalVariablesFlush();
+}
+
+void SN_MovePanel(const int x,const int y)
+{
+   int dx=x-g_sn_x, dy=y-g_sn_y;
+   if(dx==0 && dy==0) return;
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,SN_PREFIX)!=0) continue;
+      ObjectSetInteger(0,name,OBJPROP_XDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_XDISTANCE)+dx);
+      ObjectSetInteger(0,name,OBJPROP_YDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_YDISTANCE)+dy);
+   }
+   g_sn_x=x;
+   g_sn_y=y;
+   ChartRedraw(0);
+}
+
+void SN_HandleDrag(const int id,const long &lparam,
+                         const double &dparam,const string &sparam)
+{
+   if(id!=CHARTEVENT_MOUSE_MOVE) return;
+   int mouse=(int)StringToInteger(sparam);
+   bool down=((mouse & 1)!=0);
+   int mx=(int)lparam, my=(int)dparam;
+
+   if(!g_sn_dragging && down &&
+      mx>=g_sn_x+140 && mx<=g_sn_x+SN_WIDTH-8 &&
+      my>=g_sn_y && my<=g_sn_y+42)
+   {
+      g_sn_dragging=true;
+      g_sn_drag_dx=mx-g_sn_x;
+      g_sn_drag_dy=my-g_sn_y;
+      g_sn_prev_scroll=ChartGetInteger(0,CHART_MOUSE_SCROLL);
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,false);
+   }
+
+   if(!g_sn_dragging) return;
+
+   if(down)
+   {
+      int chartW=(int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS);
+      int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+      int nx=MathMax(0,MathMin(MathMax(0,chartW-SN_WIDTH),mx-g_sn_drag_dx));
+      int ny=MathMax(0,MathMin(MathMax(0,chartH-44),my-g_sn_drag_dy));
+      SN_MovePanel(nx,ny);
+   }
+   else
+   {
+      g_sn_dragging=false;
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,g_sn_prev_scroll!=0);
+      SN_SavePosition();
+   }
+}
+
 bool SN_Init()
 {
+   SN_LoadPosition();
    SN_CreatePanel();
    SN_UpdatePanel();
+   SN_ApplyMinimize();
    return true;
 }
 
 void SN_Deinit()
 {
+   SN_SavePosition();
    ObjectsDeleteAll(0,SN_PREFIX);
    ChartRedraw(0);
 }
 
 void SN_ChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
 {
+   if(id==CHARTEVENT_MOUSE_MOVE)
+   {
+      SN_HandleDrag(id,lparam,dparam,sparam);
+      return;
+   }
    if(id!=CHARTEVENT_OBJECT_CLICK) return;
-   if(sparam==SN_PREFIX+"btn_news_refresh")
+   if(sparam==SN_PREFIX+"btn_min")
+   {
+      g_sn_minimized=!g_sn_minimized;
+      SN_ApplyMinimize();
+      ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+   }
+   else if(sparam==SN_PREFIX+"btn_news_refresh")
    {
       ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
       RefreshNews();
@@ -4802,6 +5016,49 @@ input int InpNC_Y = 25;                  // Panel Y position
 
 string g_nc_note="";
 bool g_nc_checked[NC_ITEMS];
+bool g_nc_minimized=false;
+int  g_nc_x=0,g_nc_y=0;
+bool g_nc_dragging=false;
+int  g_nc_drag_dx=0,g_nc_drag_dy=0;
+long g_nc_prev_scroll=1;
+
+// Keep the header accessible while hiding checklist and note controls.
+string NC_RTLText(const string value)
+{
+   bool rtl=false;
+   for(int i=0;i<StringLen(value);i++)
+   {
+      ushort ch=(ushort)StringGetCharacter(value,i);
+      if((ch>=0x0590 && ch<=0x08FF) || (ch>=0xFB1D && ch<=0xFEFC))
+      {
+         rtl=true;
+         break;
+      }
+   }
+   if(!rtl) return value;
+   string mark=ShortToString(0x200F);
+   return mark+value+mark;
+}
+
+void NC_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,NC_PREFIX)!=0) continue;
+      bool keep=(name==NC_PREFIX+"bg" || name==NC_PREFIX+"header" ||
+                 name==NC_PREFIX+"line" || name==NC_PREFIX+"title" ||
+                 name==NC_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_nc_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,NC_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,NC_PREFIX+"bg",OBJPROP_YSIZE,g_nc_minimized?44:NC_HEIGHT);
+   if(ObjectFind(0,NC_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,NC_PREFIX+"btn_min",OBJPROP_TEXT,g_nc_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 string NC_FileName()
 {
@@ -4844,10 +5101,11 @@ void NC_Label(string id,int x,int y,string value,color clr,int size=8)
    ObjectSetInteger(0,n,OBJPROP_CORNER,CORNER_LEFT_UPPER);
    ObjectSetInteger(0,n,OBJPROP_XDISTANCE,x);
    ObjectSetInteger(0,n,OBJPROP_YDISTANCE,y);
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,NC_RTLText(value));
    ObjectSetString(0,n,OBJPROP_FONT,"Tahoma");
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,size);
    ObjectSetInteger(0,n,OBJPROP_COLOR,clr);
+   ObjectSetInteger(0,n,OBJPROP_ANCHOR,ANCHOR_RIGHT_UPPER);
    ObjectSetInteger(0,n,OBJPROP_SELECTABLE,false);
    ObjectSetInteger(0,n,OBJPROP_HIDDEN,true);
    ObjectSetInteger(0,n,OBJPROP_BACK,false);
@@ -4858,7 +5116,7 @@ void NC_SetLabel(string id,string value,color clr)
 {
    string n=NC_PREFIX+id;
    if(ObjectFind(0,n)<0) return;
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,NC_RTLText(value));
    ObjectSetInteger(0,n,OBJPROP_COLOR,clr);
 }
 
@@ -4875,7 +5133,7 @@ void NC_Button(string id,int x,int y,int w,int h,string value,color bg,color fg)
    ObjectSetInteger(0,n,OBJPROP_YDISTANCE,y);
    ObjectSetInteger(0,n,OBJPROP_XSIZE,w);
    ObjectSetInteger(0,n,OBJPROP_YSIZE,h);
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,NC_RTLText(value));
    ObjectSetString(0,n,OBJPROP_FONT,"Tahoma");
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,8);
    ObjectSetInteger(0,n,OBJPROP_COLOR,fg);
@@ -4906,7 +5164,7 @@ void NC_Edit(string id,int x,int y,int w,int h,string value)
    ObjectSetInteger(0,n,OBJPROP_COLOR,C_TEXT);
    ObjectSetInteger(0,n,OBJPROP_BGCOLOR,C_BAR_BG);
    ObjectSetInteger(0,n,OBJPROP_BORDER_COLOR,C_BORDER);
-   ObjectSetInteger(0,n,OBJPROP_ALIGN,ALIGN_LEFT);
+   ObjectSetInteger(0,n,OBJPROP_ALIGN,ALIGN_RIGHT);
    ObjectSetInteger(0,n,OBJPROP_READONLY,false);
    ObjectSetInteger(0,n,OBJPROP_SELECTABLE,true);
    ObjectSetInteger(0,n,OBJPROP_HIDDEN,true);
@@ -4915,17 +5173,18 @@ void NC_Edit(string id,int x,int y,int w,int h,string value)
 
 void NC_CreatePanel()
 {
-   int x=InpNC_X,y=InpNC_Y,pad=13;
+   int x=g_nc_x,y=g_nc_y,pad=13;
    NC_Rect("bg",x,y,NC_WIDTH,NC_HEIGHT,C_BG,C_BORDER);
    NC_Rect("header",x,y,NC_WIDTH,42,C_HEADER,C_HEADER);
    NC_Rect("line",x,y+42,NC_WIDTH,2,C_ACCENT,C_ACCENT);
-   NC_Label("title",x+pad,y+11,"یادداشت و چک‌لیست معامله",C_TEXT,11);
+   NC_Label("title",x+NC_WIDTH-pad,y+11,"یادداشت و چک‌لیست معامله",C_TEXT,11);
+   NC_Button("btn_min",x+pad,y+9,26,24,"–",C_BTN,C_TEXT);
 
-   NC_Label("note_title",x+pad,y+55,"یادداشت سریع",C_ACCENT,9);
-   NC_Edit("note_edit",x+pad,y+76,230,27,g_nc_note);
-   NC_Button("btn_save",x+252,y+76,84,27,"ذخیره",C_BTN,C_TEXT);
+   NC_Label("note_title",x+NC_WIDTH-pad,y+55,"یادداشت سریع",C_ACCENT,9);
+   NC_Edit("note_edit",x+pad+94,y+76,NC_WIDTH-pad-(pad+94),27,g_nc_note);
+   NC_Button("btn_save",x+pad,y+76,84,27,"ذخیره",C_BTN,C_TEXT);
 
-   NC_Label("check_title",x+pad,y+119,"چک‌لیست پیش از ورود",C_ACCENT,9);
+   NC_Label("check_title",x+NC_WIDTH-pad,y+119,"چک‌لیست پیش از ورود",C_ACCENT,9);
    string items[NC_ITEMS]={
       "ساختار بازار و جهت معامله مشخص است",
       "نقدینگی یا ناحیه ورود تأیید شده",
@@ -4937,13 +5196,13 @@ void NC_CreatePanel()
    for(int i=0;i<NC_ITEMS;i++)
    {
       int row_y=y+148+i*28;
-      NC_Button("check_"+IntegerToString(i),x+pad,row_y,27,22,"□",C_BTN,C_TEXT);
-      NC_Label("item_"+IntegerToString(i),x+pad+37,row_y+5,items[i],C_TEXT,8);
+      NC_Button("check_"+IntegerToString(i),x+NC_WIDTH-pad-27,row_y,27,22,"□",C_BTN,C_TEXT);
+      NC_Label("item_"+IntegerToString(i),x+NC_WIDTH-pad-37,row_y+5,items[i],C_TEXT,8);
    }
 
    NC_Rect("footer_line",x+pad,y+323,NC_WIDTH-2*pad,1,C_BORDER,C_BORDER);
-   NC_Label("progress",x+pad,y+337,"۰ از ۶ مورد تکمیل شده",C_MUTED,8);
-   NC_Button("btn_reset",x+NC_WIDTH-107,y+332,94,25,"بازنشانی",C_BTN,C_TEXT);
+   NC_Label("progress",x+NC_WIDTH-pad,y+337,"۰ از ۶ مورد تکمیل شده",C_MUTED,8);
+   NC_Button("btn_reset",x+pad,y+332,94,25,"بازنشانی",C_BTN,C_TEXT);
 }
 
 void NC_Load()
@@ -4977,6 +5236,22 @@ bool NC_Save()
    return true;
 }
 
+void NC_UpdatePanel();
+
+void NC_SetMinimized(const bool minimized)
+{
+   if(g_nc_minimized==minimized) return;
+   if(minimized && !g_nc_minimized)
+   {
+      string edit=NC_PREFIX+"note_edit";
+      if(ObjectFind(0,edit)>=0) g_nc_note=ObjectGetString(0,edit,OBJPROP_TEXT);
+      NC_Save();
+   }
+   g_nc_minimized=minimized;
+   NC_ApplyMinimize();
+   if(!minimized) NC_UpdatePanel();
+}
+
 void NC_UpdatePanel()
 {
    int done=0;
@@ -4995,16 +5270,101 @@ void NC_UpdatePanel()
                done==NC_ITEMS? C_ACCENT:C_MUTED);
 }
 
+
+string NC_PositionKey(const string axis)
+{
+   string symbol=_Symbol;
+   StringReplace(symbol,".","_");
+   StringReplace(symbol,"/","_");
+   return "CM_NOTES_"+IntegerToString((int)AccountInfoInteger(ACCOUNT_LOGIN))+"_"+
+          symbol+"_"+IntegerToString((int)_Period)+"_"+axis;
+}
+
+void NC_LoadPosition()
+{
+   g_nc_x=InpNC_X;
+   g_nc_y=InpNC_Y;
+   string kx=NC_PositionKey("X");
+   string ky=NC_PositionKey("Y");
+   if(GlobalVariableCheck(kx)) g_nc_x=(int)GlobalVariableGet(kx);
+   if(GlobalVariableCheck(ky)) g_nc_y=(int)GlobalVariableGet(ky);
+}
+
+void NC_SavePosition()
+{
+   GlobalVariableSet(NC_PositionKey("X"),g_nc_x);
+   GlobalVariableSet(NC_PositionKey("Y"),g_nc_y);
+   GlobalVariablesFlush();
+}
+
+void NC_MovePanel(const int x,const int y)
+{
+   int dx=x-g_nc_x, dy=y-g_nc_y;
+   if(dx==0 && dy==0) return;
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,NC_PREFIX)!=0) continue;
+      ObjectSetInteger(0,name,OBJPROP_XDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_XDISTANCE)+dx);
+      ObjectSetInteger(0,name,OBJPROP_YDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_YDISTANCE)+dy);
+   }
+   g_nc_x=x;
+   g_nc_y=y;
+   ChartRedraw(0);
+}
+
+void NC_HandleDrag(const int id,const long &lparam,
+                         const double &dparam,const string &sparam)
+{
+   if(id!=CHARTEVENT_MOUSE_MOVE) return;
+   int mouse=(int)StringToInteger(sparam);
+   bool down=((mouse & 1)!=0);
+   int mx=(int)lparam, my=(int)dparam;
+
+   if(!g_nc_dragging && down &&
+      mx>=g_nc_x+110 && mx<=g_nc_x+NC_WIDTH-8 &&
+      my>=g_nc_y && my<=g_nc_y+42)
+   {
+      g_nc_dragging=true;
+      g_nc_drag_dx=mx-g_nc_x;
+      g_nc_drag_dy=my-g_nc_y;
+      g_nc_prev_scroll=ChartGetInteger(0,CHART_MOUSE_SCROLL);
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,false);
+   }
+
+   if(!g_nc_dragging) return;
+
+   if(down)
+   {
+      int chartW=(int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS);
+      int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+      int nx=MathMax(0,MathMin(MathMax(0,chartW-NC_WIDTH),mx-g_nc_drag_dx));
+      int ny=MathMax(0,MathMin(MathMax(0,chartH-44),my-g_nc_drag_dy));
+      NC_MovePanel(nx,ny);
+   }
+   else
+   {
+      g_nc_dragging=false;
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,g_nc_prev_scroll!=0);
+      NC_SavePosition();
+   }
+}
+
 bool NC_Init()
 {
    NC_Load();
+   NC_LoadPosition();
    NC_CreatePanel();
    NC_UpdatePanel();
+   NC_ApplyMinimize();
    return true;
 }
 
 void NC_Deinit()
 {
+   NC_SavePosition();
    string edit=NC_PREFIX+"note_edit";
    if(ObjectFind(0,edit)>=0) g_nc_note=ObjectGetString(0,edit,OBJPROP_TEXT);
    NC_Save();
@@ -5014,8 +5374,27 @@ void NC_Deinit()
 
 void NC_ChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
 {
+   if(id==CHARTEVENT_MOUSE_MOVE)
+   {
+      NC_HandleDrag(id,lparam,dparam,sparam);
+      return;
+   }
    if(id==CHARTEVENT_OBJECT_CLICK)
    {
+      if(sparam==NC_PREFIX+"btn_min")
+      {
+         if(!g_nc_minimized)
+         {
+            string edit=NC_PREFIX+"note_edit";
+            if(ObjectFind(0,edit)>=0) g_nc_note=ObjectGetString(0,edit,OBJPROP_TEXT);
+            NC_Save();
+         }
+         g_nc_minimized=!g_nc_minimized;
+         NC_ApplyMinimize();
+         if(!g_nc_minimized) NC_UpdatePanel();
+         ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+         return;
+      }
       if(sparam==NC_PREFIX+"btn_save")
       {
          g_nc_note=ObjectGetString(0,NC_PREFIX+"note_edit",OBJPROP_TEXT);
@@ -5125,7 +5504,7 @@ void Btn(string name,int x,int y,int w,int h,string txt,color bg,color fg=C_TEXT
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,size);
    ObjectSetInteger(0,n,OBJPROP_COLOR,fg);
    ObjectSetInteger(0,n,OBJPROP_BGCOLOR,bg);
-   ObjectSetInteger(0,n,OBJPROP_BORDER_COLOR,bg);
+   ObjectSetInteger(0,n,OBJPROP_BORDER_COLOR,bg==C_BTN? C_BORDER:bg);
    ObjectSetInteger(0,n,OBJPROP_STATE,false);
    ObjectSetInteger(0,n,OBJPROP_SELECTABLE,false);
    ObjectSetInteger(0,n,OBJPROP_HIDDEN,true);
@@ -5172,7 +5551,7 @@ void ApplyTab()
      }
 
    // status bar sits right under the active tab's content
-   int sy=InpPanelY+gTabH[gTab];
+   int sy=gPanelY+gTabH[gTab];
    ObjectSetInteger(0,PFX+"st_bg",OBJPROP_YDISTANCE,sy);
    ObjectSetInteger(0,PFX+"status",OBJPROP_YDISTANCE,sy+7);
    ObjectSetInteger(0,PFX+"bg",OBJPROP_YSIZE,gMin? 48 : gTabH[gTab]+28);
@@ -5180,12 +5559,102 @@ void ApplyTab()
    ChartRedraw();
   }
 
+
+string SMM_PositionKey(const string axis)
+{
+   string symbol=_Symbol;
+   StringReplace(symbol,".","_");
+   StringReplace(symbol,"/","_");
+   return "CM_RISK_"+IntegerToString((int)AccountInfoInteger(ACCOUNT_LOGIN))+"_"+
+          symbol+"_"+IntegerToString((int)_Period)+"_"+axis;
+}
+
+void SMM_LoadPanelPosition()
+{
+   gPanelX=InpPanelX;
+   gPanelY=InpPanelY;
+   string kx=SMM_PositionKey("X");
+   string ky=SMM_PositionKey("Y");
+   if(GlobalVariableCheck(kx)) gPanelX=(int)GlobalVariableGet(kx);
+   if(GlobalVariableCheck(ky)) gPanelY=(int)GlobalVariableGet(ky);
+}
+
+void SMM_SavePanelPosition()
+{
+   GlobalVariableSet(SMM_PositionKey("X"),gPanelX);
+   GlobalVariableSet(SMM_PositionKey("Y"),gPanelY);
+   GlobalVariablesFlush();
+}
+
+void SMM_MovePanel(const int x,const int y)
+{
+   int dx=x-gPanelX,dy=y-gPanelY;
+   if(dx==0 && dy==0) return;
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,PFX)!=0) continue;
+      ObjectSetInteger(0,name,OBJPROP_XDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_XDISTANCE)+dx);
+      ObjectSetInteger(0,name,OBJPROP_YDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_YDISTANCE)+dy);
+   }
+   gPanelX=x;
+   gPanelY=y;
+   ApplyTab();
+}
+
+void SMM_HandlePanelDrag(const int id,const long &lparam,
+                         const double &dparam,const string &sparam)
+{
+   if(id!=CHARTEVENT_MOUSE_MOVE) return;
+   int mouse=(int)StringToInteger(sparam);
+   bool down=((mouse & 1)!=0);
+   int mx=(int)lparam,my=(int)dparam;
+
+   if(!gPanelDragging && down &&
+      mx>=gPanelX+8 && mx<=gPanelX+PW-50 &&
+      my>=gPanelY && my<=gPanelY+46)
+   {
+      gPanelDragging=true;
+      gPanelDragDX=mx-gPanelX;
+      gPanelDragDY=my-gPanelY;
+      gPanelPrevScroll=ChartGetInteger(0,CHART_MOUSE_SCROLL);
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,false);
+   }
+
+   if(!gPanelDragging) return;
+
+   if(down)
+   {
+      int chartW=(int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS);
+      int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+      int panelH=gMin? 48 : MathMax(48,gTabH[gTab]+28);
+      int nx=MathMax(0,MathMin(MathMax(0,chartW-PW),mx-gPanelDragDX));
+      int ny=MathMax(0,MathMin(MathMax(0,chartH-panelH),my-gPanelDragDY));
+      SMM_MovePanel(nx,ny);
+   }
+   else
+   {
+      gPanelDragging=false;
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,gPanelPrevScroll!=0);
+      SMM_SavePanelPosition();
+   }
+}
+
+void SMM_SetMinimized(const bool minimized)
+{
+   if(gMin==minimized) return;
+   gMin=minimized;
+   ApplyTab();
+}
+
 //+------------------------------------------------------------------+
 //| Build the whole panel (tabbed)                                   |
 //+------------------------------------------------------------------+
 void BuildPanel()
   {
-   int x=InpPanelX, y=InpPanelY;
+   int x=gPanelX, y=gPanelY;
    int pad=14, inner=PW-2*pad;
    int bw=(inner-8)/2;
    int cw=(inner-12)/3;
@@ -6594,6 +7063,86 @@ void UpdatePanel()
    ChartRedraw();
   }
 
+
+bool gCM_HasSnapshot=false;
+bool gCM_PrevRisk=false,gCM_PrevTools=false;
+bool gCM_PrevSessions=false,gCM_PrevNotes=false;
+
+string CM_RTLText(const string value)
+{
+   string mark=ShortToString(0x200F);
+   return mark+value+mark;
+}
+
+void CM_UpdateMasterControl()
+{
+   if(ObjectFind(0,"CMD_ALL")<0) return;
+   bool all=gMin && g_tbMin && g_sn_minimized && g_nc_minimized;
+   ObjectSetString(0,"CMD_ALL",OBJPROP_TEXT,
+                   CM_RTLText(all?"بازکردن همه":"جمع‌کردن همه"));
+}
+
+void CM_SetAllMinimized(const bool minimized)
+{
+   SMM_SetMinimized(minimized);
+   DPP_SetMinimized(minimized);
+   SN_SetMinimized(minimized);
+   NC_SetMinimized(minimized);
+}
+
+void CM_ToggleAll()
+{
+   bool all=gMin && g_tbMin && g_sn_minimized && g_nc_minimized;
+   if(!all)
+   {
+      gCM_PrevRisk=gMin;
+      gCM_PrevTools=g_tbMin;
+      gCM_PrevSessions=g_sn_minimized;
+      gCM_PrevNotes=g_nc_minimized;
+      gCM_HasSnapshot=true;
+      CM_SetAllMinimized(true);
+   }
+   else if(gCM_HasSnapshot)
+   {
+      SMM_SetMinimized(gCM_PrevRisk);
+      DPP_SetMinimized(gCM_PrevTools);
+      SN_SetMinimized(gCM_PrevSessions);
+      NC_SetMinimized(gCM_PrevNotes);
+      gCM_HasSnapshot=false;
+   }
+   else
+      CM_SetAllMinimized(false);
+
+   CM_UpdateMasterControl();
+}
+
+bool CM_CreateMasterControl()
+{
+   string name="CMD_ALL";
+   if(ObjectFind(0,name)<0 && !ObjectCreate(0,name,OBJ_BUTTON,0,0,0))
+   {
+      Print("Trading Dashboard: failed to create master panel button. Error: ",GetLastError());
+      return false;
+   }
+   ObjectSetInteger(0,name,OBJPROP_CORNER,CORNER_RIGHT_LOWER);
+   ObjectSetInteger(0,name,OBJPROP_XDISTANCE,12);
+   ObjectSetInteger(0,name,OBJPROP_YDISTANCE,10);
+   ObjectSetInteger(0,name,OBJPROP_XSIZE,118);
+   ObjectSetInteger(0,name,OBJPROP_YSIZE,26);
+   ObjectSetString(0,name,OBJPROP_FONT,"Tahoma");
+   ObjectSetInteger(0,name,OBJPROP_FONTSIZE,8);
+   ObjectSetInteger(0,name,OBJPROP_COLOR,C_TEXT);
+   ObjectSetInteger(0,name,OBJPROP_BGCOLOR,C_BTN);
+   ObjectSetInteger(0,name,OBJPROP_BORDER_COLOR,C_BORDER);
+   ObjectSetInteger(0,name,OBJPROP_STATE,false);
+   ObjectSetInteger(0,name,OBJPROP_SELECTABLE,false);
+   ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
+   ObjectSetInteger(0,name,OBJPROP_ZORDER,50);
+   ObjectSetString(0,name,OBJPROP_TOOLTIP,"Collapse or restore all dashboard panels");
+   CM_UpdateMasterControl();
+   return true;
+}
+
 //+------------------------------------------------------------------+
 //| Expert events                                                    |
 //+------------------------------------------------------------------+
@@ -6621,6 +7170,7 @@ int OnInit()
    UpdateStats(true);
    RefreshNews();
    RefreshHeadlines();
+   SMM_LoadPanelPosition();
    BuildPanel();
 
    // One high-resolution timer is shared by all modules.
@@ -6652,6 +7202,7 @@ int OnInit()
      }
 
    NC_Init();
+   CM_CreateMasterControl();
    UpdatePanel();
    CCT_Timer();
    SN_UpdatePanel();
@@ -6661,6 +7212,8 @@ int OnInit()
 
 void OnDeinit(const int reason)
   {
+   SMM_SavePanelPosition();
+   ObjectDelete(0,"CMD_ALL");
    NC_Deinit();
    CCT_Deinit(reason);
    SN_Deinit();
@@ -6711,10 +7264,26 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 
 void OnChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
   {
+   if(id==CHARTEVENT_OBJECT_CLICK && sparam=="CMD_ALL")
+     {
+      CM_ToggleAll();
+      ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+      return;
+     }
+
    DPP_ChartEvent(id,lparam,dparam,sparam);
    CCT_ChartEvent(id,lparam,dparam,sparam);
    SN_ChartEvent(id,lparam,dparam,sparam);
    NC_ChartEvent(id,lparam,dparam,sparam);
+   SMM_HandlePanelDrag(id,lparam,dparam,sparam);
+   if(id==CHARTEVENT_CLICK) CM_UpdateMasterControl();
+
+   if(id==CHARTEVENT_OBJECT_CLICK &&
+      (sparam==SN_PREFIX+"btn_min" || sparam==NC_PREFIX+"btn_min" || sparam==UI+"tb"))
+     {
+      CM_UpdateMasterControl();
+      return;
+     }
 
    if(id==CHARTEVENT_CHART_CHANGE)
      {
@@ -6724,7 +7293,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
 
    if(id==CHARTEVENT_OBJECT_CLICK)
      {
-      if(sparam==PFX+"btn_min")        { gMin=!gMin; ApplyTab(); }
+      if(sparam==PFX+"btn_min")        { SMM_SetMinimized(!gMin); CM_UpdateMasterControl(); }
       else if(StringFind(sparam,PFX+"tab_")==0)
         {
          gTab=(int)StringToInteger(StringSubstr(sparam,StringLen(PFX)+4,1));

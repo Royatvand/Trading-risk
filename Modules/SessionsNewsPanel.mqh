@@ -11,6 +11,58 @@ input bool InpSN_ShowHeadlines = true;    // Show GDELT headlines section
 #define SN_HEIGHT 510
 #define SN_NEWS_ROWS 4
 #define SN_HEADLINE_ROWS 2
+bool g_sn_minimized=false;
+int  g_sn_x=0,g_sn_y=0;
+bool g_sn_dragging=false;
+int  g_sn_drag_dx=0,g_sn_drag_dy=0;
+long g_sn_prev_scroll=1;
+
+// Keep the title bar and its toggle visible while the panel is collapsed.
+string SN_RTLText(const string value)
+{
+   bool rtl=false;
+   for(int i=0;i<StringLen(value);i++)
+   {
+      ushort ch=(ushort)StringGetCharacter(value,i);
+      if((ch>=0x0590 && ch<=0x08FF) || (ch>=0xFB1D && ch<=0xFEFC))
+      {
+         rtl=true;
+         break;
+      }
+   }
+   if(!rtl) return value;
+   string mark=ShortToString(0x200F);
+   return mark+value+mark;
+}
+
+void SN_ApplyMinimize();
+
+void SN_SetMinimized(const bool minimized)
+{
+   if(g_sn_minimized==minimized) return;
+   g_sn_minimized=minimized;
+   SN_ApplyMinimize();
+}
+
+void SN_ApplyMinimize()
+{
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,SN_PREFIX)!=0) continue;
+      bool keep=(name==SN_PREFIX+"bg" || name==SN_PREFIX+"header" ||
+                 name==SN_PREFIX+"line" || name==SN_PREFIX+"title" ||
+                 name==SN_PREFIX+"btn_min");
+      ObjectSetInteger(0,name,OBJPROP_TIMEFRAMES,
+                       (!g_sn_minimized || keep)? OBJ_ALL_PERIODS:OBJ_NO_PERIODS);
+   }
+   if(ObjectFind(0,SN_PREFIX+"bg")>=0)
+      ObjectSetInteger(0,SN_PREFIX+"bg",OBJPROP_YSIZE,g_sn_minimized?44:SN_HEIGHT);
+   if(ObjectFind(0,SN_PREFIX+"btn_min")>=0)
+      ObjectSetString(0,SN_PREFIX+"btn_min",OBJPROP_TEXT,g_sn_minimized?"+":"–");
+   ChartRedraw(0);
+}
+
 
 //--- UI helpers
 void SN_Rect(string id,int x,int y,int w,int h,color bg,color border)
@@ -48,10 +100,11 @@ void SN_Label(string id,int x,int y,string value,color clr,int size=8,
    ObjectSetInteger(0,n,OBJPROP_ANCHOR,anchor);
    ObjectSetInteger(0,n,OBJPROP_XDISTANCE,x);
    ObjectSetInteger(0,n,OBJPROP_YDISTANCE,y);
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,SN_RTLText(value));
    ObjectSetString(0,n,OBJPROP_FONT,font);
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,size);
    ObjectSetInteger(0,n,OBJPROP_COLOR,clr);
+   ObjectSetInteger(0,n,OBJPROP_ANCHOR,anchor);
    ObjectSetInteger(0,n,OBJPROP_SELECTABLE,false);
    ObjectSetInteger(0,n,OBJPROP_HIDDEN,true);
    ObjectSetInteger(0,n,OBJPROP_BACK,false);
@@ -62,7 +115,7 @@ void SN_SetLabel(string id,string value,color clr)
 {
    string n=SN_PREFIX+id;
    if(ObjectFind(0,n)<0) return;
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,SN_RTLText(value));
    ObjectSetInteger(0,n,OBJPROP_COLOR,clr);
 }
 
@@ -79,7 +132,7 @@ void SN_Button(string id,int x,int y,int w,int h,string value)
    ObjectSetInteger(0,n,OBJPROP_YDISTANCE,y);
    ObjectSetInteger(0,n,OBJPROP_XSIZE,w);
    ObjectSetInteger(0,n,OBJPROP_YSIZE,h);
-   ObjectSetString(0,n,OBJPROP_TEXT,value);
+   ObjectSetString(0,n,OBJPROP_TEXT,SN_RTLText(value));
    ObjectSetString(0,n,OBJPROP_FONT,"Tahoma");
    ObjectSetInteger(0,n,OBJPROP_FONTSIZE,8);
    ObjectSetInteger(0,n,OBJPROP_COLOR,C_TEXT);
@@ -255,48 +308,49 @@ string SN_FormatCalendarValue(bool available,double value,int digits)
 
 void SN_CreatePanel()
 {
-   int x=InpSN_X, y=InpSN_Y, pad=13;
+   int x=g_sn_x, y=g_sn_y, pad=13;
    SN_Rect("bg",x,y,SN_WIDTH,SN_HEIGHT,C_BG,C_BORDER);
    SN_Rect("header",x,y,SN_WIDTH,42,C_HEADER,C_HEADER);
    SN_Rect("line",x,y+42,SN_WIDTH,2,C_ACCENT,C_ACCENT);
-   SN_Label("title",x+pad,y+11,"سشن‌ها و اخبار اقتصادی",C_TEXT,11,"Tahoma");
-   SN_Button("btn_news_refresh",x+SN_WIDTH-91,y+9,78,24,"تازه‌سازی خبر");
+   SN_Label("title",x+SN_WIDTH-pad,y+11,"سشن‌ها و اخبار اقتصادی",C_TEXT,11,"Tahoma",ANCHOR_RIGHT_UPPER);
+   SN_Button("btn_min",x+pad,y+9,26,24,"–");
+   SN_Button("btn_news_refresh",x+pad+32,y+9,86,24,"تازه‌سازی خبر");
 
-   SN_Label("sessions_title",x+pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma");
-   SN_Rect("candle_chip",x+SN_WIDTH-160,y+50,147,24,C_CARD,C_BORDER);
-   SN_Label("candle_timer",x+SN_WIDTH-154,y+55,"کندل: در حال محاسبه...",C_ACCENT,8,"Tahoma");
+   SN_Label("sessions_title",x+SN_WIDTH-pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+   SN_Rect("candle_chip",x+pad,y+50,147,24,C_CARD,C_BORDER);
+   SN_Label("candle_timer",x+pad+140,y+55,"کندل: در حال محاسبه...",C_ACCENT,8,"Tahoma",ANCHOR_RIGHT_UPPER);
    string session_names[4]={"سیدنی","توکیو","لندن","نیویورک"};
    for(int i=0;i<4;i++)
    {
       int row_y=y+79+i*22;
-      SN_Label("session_name_"+IntegerToString(i),x+pad,row_y,session_names[i],C_TEXT,9,"Tahoma");
-      SN_Label("session_state_"+IntegerToString(i),x+108,row_y,"در حال محاسبه...",C_MUTED,8,"Tahoma");
+      SN_Label("session_name_"+IntegerToString(i),x+SN_WIDTH-pad,row_y,session_names[i],C_TEXT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("session_state_"+IntegerToString(i),x+SN_WIDTH-pad-88,row_y,"در حال محاسبه...",C_MUTED,8,"Tahoma",ANCHOR_RIGHT_UPPER);
    }
 
    SN_Rect("divider",x+pad,y+169,SN_WIDTH-2*pad,1,C_BORDER,C_BORDER);
-   SN_Label("calendar_title",x+pad,y+180,"تقویم اقتصادی",C_ACCENT,9,"Tahoma");
-   SN_Button("btn_headline_refresh",x+SN_WIDTH-91,y+175,78,23,"تیترهای جدید");
-   SN_Label("calendar_status",x+pad,y+202,"در حال دریافت اطلاعات تقویم...",C_MUTED,8,"Tahoma");
+   SN_Label("calendar_title",x+SN_WIDTH-pad,y+180,"تقویم اقتصادی",C_ACCENT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+   SN_Button("btn_headline_refresh",x+pad,y+175,86,23,"تیترهای جدید");
+   SN_Label("calendar_status",x+SN_WIDTH-pad,y+202,"در حال دریافت اطلاعات تقویم...",C_MUTED,8,"Tahoma",ANCHOR_RIGHT_UPPER);
    SN_Rect("news_card",x+pad-4,y+222,SN_WIDTH-2*pad+8,184,C_CARD,C_BORDER);
    for(int i=0;i<SN_NEWS_ROWS;i++)
    {
       int row_y=y+229+i*42;
-      SN_Label("news_meta_"+IntegerToString(i),x+pad+4,row_y,"-",C_WARN,8,"Tahoma");
-      SN_Label("news_title_"+IntegerToString(i),x+pad+4,row_y+14,"-",C_TEXT,9,"Tahoma");
-      SN_Label("news_values_"+IntegerToString(i),x+pad+4,row_y+27,"-",C_MUTED,7,"Tahoma");
+      SN_Label("news_meta_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y,"-",C_WARN,8,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("news_title_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y+14,"-",C_TEXT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("news_values_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y+27,"-",C_MUTED,7,"Tahoma",ANCHOR_RIGHT_UPPER);
       if(i<SN_NEWS_ROWS-1)
          SN_Rect("news_sep_"+IntegerToString(i),x+pad+4,row_y+40,SN_WIDTH-2*pad-8,1,C_BORDER,C_BORDER);
    }
 
    if(InpSN_ShowHeadlines)
    {
-      SN_Label("headlines_title",x+pad,y+414,"تیترهای جهانی",C_ACCENT,9,"Tahoma");
-      SN_Label("headlines_status",x+pad,y+434,"در حال دریافت تیترها...",C_MUTED,7,"Tahoma");
+      SN_Label("headlines_title",x+SN_WIDTH-pad,y+414,"تیترهای جهانی",C_ACCENT,9,"Tahoma",ANCHOR_RIGHT_UPPER);
+      SN_Label("headlines_status",x+SN_WIDTH-pad,y+434,"در حال دریافت تیترها...",C_MUTED,7,"Tahoma",ANCHOR_RIGHT_UPPER);
       for(int i=0;i<SN_HEADLINE_ROWS;i++)
       {
          int row_y=y+453+i*23;
-         SN_Label("headline_title_"+IntegerToString(i),x+pad+4,row_y,"-",C_TEXT,8,"Tahoma");
-         SN_Label("headline_meta_"+IntegerToString(i),x+pad+4,row_y+13,"-",C_MUTED,7,"Tahoma");
+         SN_Label("headline_title_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y,"-",C_TEXT,8,"Tahoma",ANCHOR_RIGHT_UPPER);
+         SN_Label("headline_meta_"+IntegerToString(i),x+SN_WIDTH-pad-4,row_y+13,"-",C_MUTED,7,"Tahoma",ANCHOR_RIGHT_UPPER);
       }
    }
 }
@@ -365,23 +419,119 @@ void SN_UpdatePanel()
    }
 }
 
+
+string SN_PositionKey(const string axis)
+{
+   string symbol=_Symbol;
+   StringReplace(symbol,".","_");
+   StringReplace(symbol,"/","_");
+   return "CM_SESS_"+IntegerToString((int)AccountInfoInteger(ACCOUNT_LOGIN))+"_"+
+          symbol+"_"+IntegerToString((int)_Period)+"_"+axis;
+}
+
+void SN_LoadPosition()
+{
+   g_sn_x=InpSN_X;
+   g_sn_y=InpSN_Y;
+   string kx=SN_PositionKey("X");
+   string ky=SN_PositionKey("Y");
+   if(GlobalVariableCheck(kx)) g_sn_x=(int)GlobalVariableGet(kx);
+   if(GlobalVariableCheck(ky)) g_sn_y=(int)GlobalVariableGet(ky);
+}
+
+void SN_SavePosition()
+{
+   GlobalVariableSet(SN_PositionKey("X"),g_sn_x);
+   GlobalVariableSet(SN_PositionKey("Y"),g_sn_y);
+   GlobalVariablesFlush();
+}
+
+void SN_MovePanel(const int x,const int y)
+{
+   int dx=x-g_sn_x, dy=y-g_sn_y;
+   if(dx==0 && dy==0) return;
+   for(int i=ObjectsTotal(0)-1;i>=0;i--)
+   {
+      string name=ObjectName(0,i);
+      if(StringFind(name,SN_PREFIX)!=0) continue;
+      ObjectSetInteger(0,name,OBJPROP_XDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_XDISTANCE)+dx);
+      ObjectSetInteger(0,name,OBJPROP_YDISTANCE,
+                       (int)ObjectGetInteger(0,name,OBJPROP_YDISTANCE)+dy);
+   }
+   g_sn_x=x;
+   g_sn_y=y;
+   ChartRedraw(0);
+}
+
+void SN_HandleDrag(const int id,const long &lparam,
+                         const double &dparam,const string &sparam)
+{
+   if(id!=CHARTEVENT_MOUSE_MOVE) return;
+   int mouse=(int)StringToInteger(sparam);
+   bool down=((mouse & 1)!=0);
+   int mx=(int)lparam, my=(int)dparam;
+
+   if(!g_sn_dragging && down &&
+      mx>=g_sn_x+140 && mx<=g_sn_x+SN_WIDTH-8 &&
+      my>=g_sn_y && my<=g_sn_y+42)
+   {
+      g_sn_dragging=true;
+      g_sn_drag_dx=mx-g_sn_x;
+      g_sn_drag_dy=my-g_sn_y;
+      g_sn_prev_scroll=ChartGetInteger(0,CHART_MOUSE_SCROLL);
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,false);
+   }
+
+   if(!g_sn_dragging) return;
+
+   if(down)
+   {
+      int chartW=(int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS);
+      int chartH=(int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+      int nx=MathMax(0,MathMin(MathMax(0,chartW-SN_WIDTH),mx-g_sn_drag_dx));
+      int ny=MathMax(0,MathMin(MathMax(0,chartH-44),my-g_sn_drag_dy));
+      SN_MovePanel(nx,ny);
+   }
+   else
+   {
+      g_sn_dragging=false;
+      ChartSetInteger(0,CHART_MOUSE_SCROLL,g_sn_prev_scroll!=0);
+      SN_SavePosition();
+   }
+}
+
 bool SN_Init()
 {
+   SN_LoadPosition();
    SN_CreatePanel();
    SN_UpdatePanel();
+   SN_ApplyMinimize();
    return true;
 }
 
 void SN_Deinit()
 {
+   SN_SavePosition();
    ObjectsDeleteAll(0,SN_PREFIX);
    ChartRedraw(0);
 }
 
 void SN_ChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
 {
+   if(id==CHARTEVENT_MOUSE_MOVE)
+   {
+      SN_HandleDrag(id,lparam,dparam,sparam);
+      return;
+   }
    if(id!=CHARTEVENT_OBJECT_CLICK) return;
-   if(sparam==SN_PREFIX+"btn_news_refresh")
+   if(sparam==SN_PREFIX+"btn_min")
+   {
+      g_sn_minimized=!g_sn_minimized;
+      SN_ApplyMinimize();
+      ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
+   }
+   else if(sparam==SN_PREFIX+"btn_news_refresh")
    {
       ObjectSetInteger(0,sparam,OBJPROP_STATE,false);
       RefreshNews();
