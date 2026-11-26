@@ -256,6 +256,8 @@ void SN_CreatePanel()
    SN_Button("btn_news_refresh",x+SN_WIDTH-91,y+9,78,24,"تازه‌سازی خبر");
 
    SN_Label("sessions_title",x+pad,y+55,"وضعیت سشن‌های معاملاتی",C_ACCENT,9,"Tahoma");
+   SN_Rect("candle_chip",x+SN_WIDTH-160,y+50,147,24,C_CARD,C_BORDER);
+   SN_Label("candle_timer",x+SN_WIDTH-154,y+55,"کندل: در حال محاسبه...",C_ACCENT,8,"Tahoma");
    string session_names[4]={"سیدنی","توکیو","لندن","نیویورک"};
    for(int i=0;i<4;i++)
    {
