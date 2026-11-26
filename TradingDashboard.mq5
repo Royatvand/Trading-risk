@@ -92,24 +92,40 @@ input int    InpPanelY           = 25;       // Panel Y
 #define NEWS_ROWS 6
 #define HEADLINE_ROWS 4
 
-//--- palette
-#define C_BG        C'16,20,31'
-#define C_HEADER    C'24,31,52'
-#define C_CARD      C'25,31,48'
-#define C_BORDER    C'44,54,84'
-#define C_TEXT      C'226,232,245'
-#define C_MUTED     C'128,140,170'
-#define C_ACCENT    C'0,214,160'
-#define C_BUY       C'0,172,112'
-#define C_SELL      C'226,62,87'
-#define C_WARN      C'255,170,50'
-#define C_BTN       C'44,56,92'
-#define C_BAR_BG    C'35,43,68'
-#define C_BLIMIT    C'0,122,92'
-#define C_SLIMIT    C'168,48,72'
-#define C_BSTOP     C'0,140,170'
-#define C_SSTOP     C'205,112,40'
-#define C_ENTRY     C'90,170,255'
+//--- shared design system: MIDNIGHT TEAL
+// Layered surfaces
+#define C_BG           C'11,17,27'
+#define C_HEADER       C'19,33,49'
+#define C_CARD         C'23,38,56'
+#define C_BAR_BG       C'26,42,61'
+#define C_BTN          C'35,50,70'
+#define C_BORDER       C'47,64,84'
+
+// Typography and semantic accents
+#define C_TEXT         C'230,237,245'
+#define C_MUTED        C'139,154,175'
+#define C_ACCENT       C'45,212,191'
+#define C_ACCENT_SOFT  C'23,74,73'
+#define C_BUY          C'34,185,130'
+#define C_SELL         C'228,90,107'
+#define C_DANGER_BG    C'73,43,56'
+#define C_WARN         C'240,180,92'
+#define C_ENTRY        C'106,175,255'
+
+// Order-type states: distinct, restrained colors
+#define C_BLIMIT       C'31,135,103'
+#define C_SLIMIT       C'157,66,86'
+#define C_BSTOP        C'35,126,150'
+#define C_SSTOP        C'168,111,53'
+
+// Raw RGB tokens for the DrawPanelPro bitmap renderer (0xRRGGBB)
+#define CM_RGB_BG            0x0B111B
+#define CM_RGB_BORDER        0x2F4054
+#define CM_RGB_TEXT          0xE6EDF5
+#define CM_RGB_MUTED         0x8B9AAF
+#define CM_RGB_ACCENT        0x2DD4BF
+#define CM_RGB_ACCENT_SOFT   0x174A49
+#define CM_RGB_HOVER         0x233246
 
 CTrade trade;
 
