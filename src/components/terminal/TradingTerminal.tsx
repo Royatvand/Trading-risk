@@ -346,9 +346,8 @@ export default function TradingTerminal() {
                 <div className="tool-group" key={group.id}>
                   <button
                     className={"tool-button tool-group-trigger" + (chosen ? " active" : "") + (openToolGroup === group.id ? " menu-open" : "")}
-                    title={group.label}
+                    title={chosen?.label ?? group.label}
                     aria-label={group.label}
-                    aria-haspopup="menu"
                     aria-expanded={openToolGroup === group.id}
                     onClick={() => setOpenToolGroup((current) => current === group.id ? null : group.id)}
                   >
@@ -356,14 +355,13 @@ export default function TradingTerminal() {
                     <ChevronRight className="tool-chevron" size={10} />
                   </button>
                   {openToolGroup === group.id && (
-                    <div className="tool-flyout" role="menu" aria-label={group.label}>
+                    <div className="tool-flyout" aria-label={group.label} onKeyDown={(event) => { if (event.key === "Escape") setOpenToolGroup(null); }}>
                       <div className="tool-flyout-title">{group.label}</div>
                       {group.tools.map((tool) => {
                         const ToolIcon = tool.icon;
                         return (
                           <button key={tool.id}
                             className={"tool-flyout-item" + (activeTool === tool.id ? " selected" : "")}
-                            role="menuitem"
                             onClick={() => { setActiveTool(tool.id); setOpenToolGroup(null); }}
                           >
                             <ToolIcon size={16} strokeWidth={1.65} />
