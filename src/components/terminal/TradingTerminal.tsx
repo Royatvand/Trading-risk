@@ -7,7 +7,7 @@ import {
   GitMerge, Grid2X2, Lock, Magnet, Maximize2, Minus, MoveHorizontal, MoveVertical,
   MoreHorizontal, MousePointer2, Plus, Repeat, Ruler, Search, Settings2, Shapes,
   SlidersHorizontal, Square, Star, StickyNote, TrendingDown, TrendingUp, Trash2,
-  Type, Undo2, Redo2, Unlock, Waves, X
+  Triangle, Type, Undo2, Redo2, Unlock, Waves, X
 } from "lucide-react";
 import MarketChart from "./MarketChart";
 import PineEditorPanel from "./PineEditorPanel";
@@ -21,8 +21,9 @@ type DrawingTool =
   | "cursor" | "crosshair" | "eraser"
   | "trend-line" | "ray" | "info-line" | "extended-line"
   | "horizontal-line" | "horizontal-ray" | "vertical-line" | "crossline"
-  | "parallel-channel" | "fibonacci" | "fib-extension"
-  | "rectangle" | "ellipse" | "shape-arrow"
+  | "parallel-channel" | "fibonacci" | "fib-extension" | "gann-fan"
+  | "rectangle" | "ellipse" | "triangle" | "shape-arrow"
+  | "triangle-pattern" | "head-and-shoulders" | "elliott-impulse"
   | "long-position" | "short-position" | "measure" | "text";
 
 type DrawingToolOption = { id: DrawingTool; label: string; icon: React.ElementType };
@@ -50,11 +51,18 @@ const drawingToolGroups: DrawingToolGroup[] = [
   { id: "fibonacci", label: "Gann and Fibonacci", icon: Waves, tools: [
     { id: "fibonacci", label: "Fib retracement", icon: Waves },
     { id: "fib-extension", label: "Trend-based Fib extension", icon: Activity },
+    { id: "gann-fan", label: "Gann fan", icon: GitMerge },
   ]},
   { id: "shapes", label: "Geometric shapes", icon: Shapes, tools: [
     { id: "rectangle", label: "Rectangle", icon: Square },
     { id: "ellipse", label: "Ellipse", icon: Circle },
+    { id: "triangle", label: "Triangle", icon: Triangle },
     { id: "shape-arrow", label: "Arrow", icon: ArrowUpRight },
+  ]},
+  { id: "patterns", label: "Patterns", icon: GitMerge, tools: [
+    { id: "triangle-pattern", label: "Triangle pattern", icon: Triangle },
+    { id: "head-and-shoulders", label: "Head and shoulders", icon: GitMerge },
+    { id: "elliott-impulse", label: "Elliott impulse wave", icon: Activity },
   ]},
   { id: "forecast", label: "Forecasting and measurement", icon: Ruler, tools: [
     { id: "long-position", label: "Long position", icon: TrendingUp },

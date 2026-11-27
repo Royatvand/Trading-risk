@@ -26,8 +26,9 @@ type DrawingTool =
   | "cursor" | "crosshair" | "eraser"
   | "trend-line" | "ray" | "info-line" | "extended-line"
   | "horizontal-line" | "horizontal-ray" | "vertical-line" | "crossline"
-  | "parallel-channel" | "fibonacci" | "fib-extension"
-  | "rectangle" | "ellipse" | "shape-arrow"
+  | "parallel-channel" | "fibonacci" | "fib-extension" | "gann-fan"
+  | "rectangle" | "ellipse" | "triangle" | "shape-arrow"
+  | "triangle-pattern" | "head-and-shoulders" | "elliott-impulse"
   | "long-position" | "short-position" | "measure" | "text";
 type SavedDrawingTool = Exclude<DrawingTool, "cursor" | "crosshair" | "eraser">;
 type DrawingPoint = { time: number; price: number };
@@ -35,12 +36,14 @@ type SavedDrawing = { id: string; tool: SavedDrawingTool; points: DrawingPoint[]
 type MagnetMode = "off" | "weak" | "strong";
 const savedDrawingTools: SavedDrawingTool[] = [
   "trend-line", "ray", "info-line", "extended-line", "horizontal-line", "horizontal-ray",
-  "vertical-line", "crossline", "parallel-channel", "fibonacci", "fib-extension",
-  "rectangle", "ellipse", "shape-arrow", "long-position", "short-position", "measure", "text",
+  "vertical-line", "crossline", "parallel-channel", "fibonacci", "fib-extension", "gann-fan",
+  "rectangle", "ellipse", "triangle", "shape-arrow", "triangle-pattern", "head-and-shoulders",
+  "elliott-impulse", "long-position", "short-position", "measure", "text",
 ];
 function requiredPoints(tool: DrawingTool): number {
   if (["text", "horizontal-line", "horizontal-ray", "vertical-line", "crossline"].includes(tool)) return 1;
-  if (tool === "parallel-channel" || tool === "fib-extension") return 3;
+  if (tool === "parallel-channel" || tool === "fib-extension" || tool === "triangle" || tool === "triangle-pattern") return 3;
+  if (tool === "head-and-shoulders" || tool === "elliott-impulse") return 5;
   return 2;
 }
 function pointToSegmentDistance(point: {x:number;y:number}, a: {x:number;y:number}, b: {x:number;y:number}): number {
@@ -605,7 +608,7 @@ export default function MarketChart({
             savedDrawingTools.includes(drawing.tool) &&
             Array.isArray(drawing.points) &&
             drawing.points.length >= requiredPoints(drawing.tool) &&
-            drawing.points.length <= 3 &&
+            drawing.points.length <= 5 &&
             drawing.points.every((point) =>
               Number.isFinite(point?.time) && Number.isFinite(point?.price)
             ) &&
@@ -717,6 +720,44 @@ export default function MarketChart({
       const dx=second.x-first.x,dy=second.y-first.y,len=Math.max(1,Math.hypot(dx,dy)),nx=-dy/len,ny=dx/len;
       const offset=(third.x-first.x)*nx+(third.y-first.y)*ny,ox=nx*offset,oy=ny*offset;
       return <g key={drawing.id}><polygon points={`${first.x},${first.y} ${second.x},${second.y} ${second.x+ox},${second.y+oy} ${first.x+ox},${first.y+oy}`} fill="rgba(41,98,255,.08)"/><line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke={blue} strokeWidth="1.5"/><line x1={first.x+ox} y1={first.y+oy} x2={second.x+ox} y2={second.y+oy} stroke={blue} strokeWidth="1.5"/><line x1={first.x} y1={first.y} x2={first.x+ox} y2={first.y+oy} stroke={blue} strokeDasharray="3 3"/><line x1={second.x} y1={second.y} x2={second.x+ox} y2={second.y+oy} stroke={blue} strokeDasharray="3 3"/>{handles}</g>;
+    }
+    if(drawing.tool==="triangle"||drawing.tool==="triangle-pattern"){
+      const isPattern=drawing.tool==="triangle-pattern";
+      return <g key={drawing.id}>
+        <polygon points={`${first.x},${first.y} ${second.x},${second.y} ${third.x},${third.y}`} fill={isPattern?"rgba(41,98,255,.04)":"rgba(41,98,255,.10)"} stroke={blue} strokeWidth="1.6" strokeDasharray={isPattern?"5 3":undefined}/>
+        {isPattern&&["A","B","C"].map((label,index)=><text key={label} x={points[index].x+6} y={points[index].y-7} fill="#9dbbff" fontSize="10">{label}</text>)}
+        {handles}
+      </g>;
+    }
+    if(drawing.tool==="head-and-shoulders"){
+      const shoulderPoints=points.slice(0,3), necklineStart=points[3], necklineEnd=points[4];
+      return <g key={drawing.id}>
+        <polyline points={shoulderPoints.map(p=>`${p.x},${p.y}`).join(" ")} fill="none" stroke={blue} strokeWidth="1.7"/>
+        <line x1={necklineStart.x} y1={necklineStart.y} x2={necklineEnd.x} y2={necklineEnd.y} stroke="#f0b84b" strokeWidth="1.4" strokeDasharray="5 3"/>
+        <text x={shoulderPoints[0].x} y={shoulderPoints[0].y-8} fill="#9dbbff" fontSize="10">LS</text>
+        <text x={shoulderPoints[1].x} y={shoulderPoints[1].y-8} fill="#9dbbff" fontSize="10">H</text>
+        <text x={shoulderPoints[2].x} y={shoulderPoints[2].y-8} fill="#9dbbff" fontSize="10">RS</text>
+        {handles}
+      </g>;
+    }
+    if(drawing.tool==="elliott-impulse"){
+      return <g key={drawing.id}>
+        <polyline points={points.map(p=>`${p.x},${p.y}`).join(" ")} fill="none" stroke={blue} strokeWidth="1.7"/>
+        {points.map((p,index)=><text key={index} x={p.x+5} y={p.y-7} fill="#9dbbff" fontSize="11" fontWeight="600">{index+1}</text>)}
+        {handles}
+      </g>;
+    }
+    if(drawing.tool==="gann-fan"){
+      const dx=second.x-first.x,dy=second.y-first.y;
+      if(dx===0)return <g key={drawing.id}><line x1={first.x} y1="0" x2={first.x} y2={chartSize.height} stroke={blue}/>{handles}</g>;
+      const ratios=[.25,.5,1,2,4];
+      return <g key={drawing.id}>
+        {ratios.map(ratio=>{
+          const slope=(dy/dx)*ratio, y=first.y+slope*(chartSize.width-first.x);
+          return <line key={ratio} x1={first.x} y1={first.y} x2={chartSize.width} y2={y} stroke={blue} strokeWidth={ratio===1?1.6:1} strokeOpacity={ratio===1?1:.65}/>;
+        })}
+        {handles}
+      </g>;
     }
     if(drawing.tool==="fibonacci"||drawing.tool==="fib-extension"){
       const left=drawing.tool==="fibonacci"?Math.min(first.x,second.x):third.x,right=drawing.tool==="fibonacci"?Math.max(first.x,second.x):chartSize.width;
