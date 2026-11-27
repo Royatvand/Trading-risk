@@ -22,14 +22,33 @@ import {
 } from "@/features/indicators/calculations";
 import type { PineResult } from "@/features/pine";
 
-type DrawingTool = "cursor" | "crosshair" | "trend" | "rectangle" | "fibonacci";
-type SavedDrawingTool = Exclude<DrawingTool, "cursor" | "crosshair">;
+type DrawingTool =
+  | "cursor" | "crosshair" | "eraser"
+  | "trend-line" | "ray" | "info-line" | "extended-line"
+  | "horizontal-line" | "horizontal-ray" | "vertical-line" | "crossline"
+  | "parallel-channel" | "fibonacci" | "fib-extension"
+  | "rectangle" | "ellipse" | "shape-arrow"
+  | "long-position" | "short-position" | "measure" | "text";
+type SavedDrawingTool = Exclude<DrawingTool, "cursor" | "crosshair" | "eraser">;
 type DrawingPoint = { time: number; price: number };
-type SavedDrawing = {
-  id: string;
-  tool: SavedDrawingTool;
-  points: [DrawingPoint, DrawingPoint];
-};
+type SavedDrawing = { id: string; tool: SavedDrawingTool; points: DrawingPoint[]; text?: string };
+type MagnetMode = "off" | "weak" | "strong";
+const savedDrawingTools: SavedDrawingTool[] = [
+  "trend-line", "ray", "info-line", "extended-line", "horizontal-line", "horizontal-ray",
+  "vertical-line", "crossline", "parallel-channel", "fibonacci", "fib-extension",
+  "rectangle", "ellipse", "shape-arrow", "long-position", "short-position", "measure", "text",
+];
+function requiredPoints(tool: DrawingTool): number {
+  if (["text", "horizontal-line", "horizontal-ray", "vertical-line", "crossline"].includes(tool)) return 1;
+  if (tool === "parallel-channel" || tool === "fib-extension") return 3;
+  return 2;
+}
+function pointToSegmentDistance(point: {x:number;y:number}, a: {x:number;y:number}, b: {x:number;y:number}): number {
+  const dx=b.x-a.x, dy=b.y-a.y, lengthSquared=dx*dx+dy*dy;
+  if (lengthSquared===0) return Math.hypot(point.x-a.x,point.y-a.y);
+  const t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.y-a.y)*dy)/lengthSquared));
+  return Math.hypot(point.x-(a.x+t*dx),point.y-(a.y+t*dy));
+}
 
 type Props = {
   symbol: string;
@@ -38,6 +57,10 @@ type Props = {
   status: "loading" | "connecting" | "live" | "reconnecting" | "error";
   error: string | null;
   activeTool: DrawingTool;
+  magnetMode: MagnetMode;
+  keepDrawing: boolean;
+  drawingsLocked: boolean;
+  onDrawingComplete: () => void;
   drawingsVisible: boolean;
   clearDrawingsSignal: number;
   onLoadOlder: () => void;
@@ -66,6 +89,10 @@ export default function MarketChart({
   status,
   error,
   activeTool,
+  magnetMode,
+  keepDrawing,
+  drawingsLocked,
+  onDrawingComplete,
   drawingsVisible,
   clearDrawingsSignal,
   onLoadOlder,
@@ -93,11 +120,11 @@ export default function MarketChart({
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
   const [drawings, setDrawings] = useState<SavedDrawing[]>([]);
   const [storageReadyKey, setStorageReadyKey] = useState<string | null>(null);
-  const [draftPoint, setDraftPoint] = useState<DrawingPoint | null>(null);
+  const [draftPoints, setDraftPoints] = useState<DrawingPoint[]>([]);
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
 
   const storageKey = "chartmasters:drawings:" + symbol + ":" + timeframe;
-  const isDrawingTool = activeTool === "trend" || activeTool === "rectangle" || activeTool === "fibonacci";
+  const isDrawingTool = activeTool !== "cursor" && activeTool !== "crosshair";
 
   onLoadOlderRef.current = onLoadOlder;
   hasMoreOlderRef.current = hasMoreOlder;
@@ -552,14 +579,14 @@ export default function MarketChart({
     });
   }, [pineResult, pineLayout, activeOscillator, candles, toChartTime]);
   useEffect(() => {
-    setDraftPoint(null);
+    setDraftPoints([]);
     setPointerPosition(null);
   }, [activeTool]);
 
   useEffect(() => {
     if (clearDrawingsSignal > 0) {
       setDrawings([]);
-      setDraftPoint(null);
+      setDraftPoints([]);
       setPointerPosition(null);
     }
   }, [clearDrawingsSignal]);
@@ -575,12 +602,14 @@ export default function MarketChart({
           loaded = parsed.filter((drawing) =>
             drawing &&
             typeof drawing.id === "string" &&
-            ["trend", "rectangle", "fibonacci"].includes(drawing.tool) &&
+            savedDrawingTools.includes(drawing.tool) &&
             Array.isArray(drawing.points) &&
-            drawing.points.length === 2 &&
+            drawing.points.length >= requiredPoints(drawing.tool) &&
+            drawing.points.length <= 3 &&
             drawing.points.every((point) =>
               Number.isFinite(point?.time) && Number.isFinite(point?.price)
-            )
+            ) &&
+            (drawing.tool !== "text" || typeof drawing.text === "string")
           );
         }
       }
@@ -590,7 +619,7 @@ export default function MarketChart({
 
     setDrawings(loaded);
     setStorageReadyKey(storageKey);
-    setDraftPoint(null);
+    setDraftPoints([]);
   }, [storageKey]);
 
   useEffect(() => {
@@ -603,158 +632,125 @@ export default function MarketChart({
     }
   }, [drawings, storageKey, storageReadyKey]);
 
+  const coordinateFor = (point: DrawingPoint) => {
+    const chart=chartRef.current, series=candleSeriesRef.current;
+    if(!chart||!series)return null;
+    const x=chart.timeScale().timeToCoordinate(point.time as UTCTimestamp), y=series.priceToCoordinate(point.price);
+    if(x===null||y===null)return null;
+    return {x,y};
+  };
+
   const pointFromPointer = (event: React.PointerEvent<SVGSVGElement>): DrawingPoint | null => {
-    const chart = chartRef.current;
-    const series = candleSeriesRef.current;
-    if (!chart || !series) return null;
+    const chart=chartRef.current, series=candleSeriesRef.current;
+    if(!chart||!series)return null;
+    const bounds=event.currentTarget.getBoundingClientRect(), x=event.clientX-bounds.left, y=event.clientY-bounds.top;
+    const time=chart.timeScale().coordinateToTime(x), rawPrice=series.coordinateToPrice(y);
+    if(typeof time!=="number"||rawPrice===null||!Number.isFinite(rawPrice))return null;
+    if(magnetMode==="off")return {time,price:rawPrice};
+    const logical=chart.timeScale().coordinateToLogical(x), candle=logical===null?undefined:candles[Math.round(logical)];
+    if(!candle)return {time,price:rawPrice};
+    if(magnetMode==="weak")return {time:toChartTime(candle.openTime),price:candle.close};
+    const candidates=[candle.open,candle.high,candle.low,candle.close];
+    const snapped=candidates.reduce((best,candidate)=>{
+      const cy=series.priceToCoordinate(candidate), by=series.priceToCoordinate(best);
+      if(cy===null)return best;if(by===null)return candidate;
+      return Math.abs(cy-y)<Math.abs(by-y)?candidate:best;
+    },candidates[0]);
+    return {time:toChartTime(candle.openTime),price:snapped};
+  };
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - bounds.left;
-    const y = event.clientY - bounds.top;
-    const time = chart.timeScale().coordinateToTime(x);
-    const price = series.coordinateToPrice(y);
+  const finishDrawing = (tool: SavedDrawingTool, points: DrawingPoint[], text?: string) => {
+    setDrawings(current=>[...current,{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tool,points,...(text?{text}:{})}]);
+    setDraftPoints([]);setPointerPosition(null);
+    if(!keepDrawing)onDrawingComplete();
+  };
 
-    if (typeof time !== "number" || price === null || !Number.isFinite(price)) return null;
-    return { time, price };
+  const handleErase = (event: React.PointerEvent<SVGSVGElement>) => {
+    if(drawingsLocked)return;
+    const bounds=event.currentTarget.getBoundingClientRect(), cursor={x:event.clientX-bounds.left,y:event.clientY-bounds.top};
+    let nearestId:string|null=null, nearestDistance=18;
+    for(const drawing of drawings){
+      const points=drawing.points.map(coordinateFor).filter((p):p is {x:number;y:number}=>Boolean(p));
+      if(!points.length)continue;
+      let distance=Math.min(...points.map(p=>Math.hypot(cursor.x-p.x,cursor.y-p.y)));
+      if(points.length>=2)distance=Math.min(distance,pointToSegmentDistance(cursor,points[0],points[1]));
+      if(distance<nearestDistance){nearestDistance=distance;nearestId=drawing.id;}
+    }
+    if(nearestId)setDrawings(current=>current.filter(drawing=>drawing.id!==nearestId));
   };
 
   const handleDrawingPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (!isDrawingTool) return;
-    event.preventDefault();
-    event.stopPropagation();
-
-    const point = pointFromPointer(event);
-    if (!point) return;
-
-    if (!draftPoint) {
-      setDraftPoint(point);
-      const bounds = event.currentTarget.getBoundingClientRect();
-      setPointerPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      });
-      return;
+    if(!isDrawingTool)return;
+    event.preventDefault();event.stopPropagation();
+    if(activeTool==="eraser"){handleErase(event);return;}
+    const point=pointFromPointer(event);if(!point)return;
+    if(activeTool==="text"){
+      const value=window.prompt("متن یادداشت روی نمودار","یادداشت");
+      if(value===null||!value.trim())return;
+      finishDrawing("text",[point],value.trim());return;
     }
-
-    const drawing: SavedDrawing = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-      tool: activeTool as SavedDrawingTool,
-      points: [draftPoint, point],
-    };
-
-    setDrawings((current) => [...current, drawing]);
-    setDraftPoint(null);
-    setPointerPosition(null);
+    const needed=requiredPoints(activeTool), next=[...draftPoints,point];
+    if(next.length>=needed){finishDrawing(activeTool as SavedDrawingTool,next.slice(0,needed));return;}
+    setDraftPoints(next);
+    const bounds=event.currentTarget.getBoundingClientRect();
+    setPointerPosition({x:event.clientX-bounds.left,y:event.clientY-bounds.top});
   };
 
   const handleDrawingPointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (!isDrawingTool || !draftPoint) return;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    setPointerPosition({
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
-    });
+    if(!isDrawingTool||activeTool==="eraser"||draftPoints.length===0)return;
+    const bounds=event.currentTarget.getBoundingClientRect();
+    setPointerPosition({x:event.clientX-bounds.left,y:event.clientY-bounds.top});
   };
 
-  const coordinateFor = (point: DrawingPoint) => {
-    const chart = chartRef.current;
-    const series = candleSeriesRef.current;
-    if (!chart || !series) return null;
-
-    const x = chart.timeScale().timeToCoordinate(point.time as UTCTimestamp);
-    const y = series.priceToCoordinate(point.price);
-    if (x === null || y === null) return null;
-    return { x, y };
-  };
-
-  const drawingNodes = drawingsVisible ? drawings.map((drawing) => {
-    const first = coordinateFor(drawing.points[0]);
-    const second = coordinateFor(drawing.points[1]);
-    if (!first || !second) return null;
-
-    if (drawing.tool === "trend") {
-      return (
-        <g key={drawing.id}>
-          <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke="#f0b84b" strokeWidth="2" />
-          <circle cx={first.x} cy={first.y} r="3" fill="#f0b84b" />
-          <circle cx={second.x} cy={second.y} r="3" fill="#f0b84b" />
-        </g>
-      );
+  const drawingNodes = drawingsVisible ? drawings.map(drawing=>{
+    const coordinates=drawing.points.map(coordinateFor);
+    if(coordinates.some(point=>!point))return null;
+    const points=coordinates as Array<{x:number;y:number}>, first=points[0], second=points[1]??first, third=points[2]??first, blue="#2962ff";
+    const handles=<>{points.map((point,index)=><circle key={index} cx={point.x} cy={point.y} r="3" fill={blue}/>)}</>;
+    if(drawing.tool==="horizontal-line"||drawing.tool==="horizontal-ray")return <g key={drawing.id}><line x1={drawing.tool==="horizontal-line"?0:first.x} y1={first.y} x2={chartSize.width} y2={first.y} stroke={blue} strokeWidth="1.5"/>{handles}</g>;
+    if(drawing.tool==="vertical-line")return <g key={drawing.id}><line x1={first.x} y1="0" x2={first.x} y2={chartSize.height} stroke={blue} strokeWidth="1.5"/>{handles}</g>;
+    if(drawing.tool==="crossline")return <g key={drawing.id}><line x1="0" y1={first.y} x2={chartSize.width} y2={first.y} stroke={blue} strokeDasharray="4 4"/><line x1={first.x} y1="0" x2={first.x} y2={chartSize.height} stroke={blue} strokeDasharray="4 4"/>{handles}</g>;
+    if(drawing.tool==="text")return <g key={drawing.id}>{handles}<text x={first.x+8} y={first.y-8} fill="#d1d4dc" fontSize="12" fontWeight="600" paintOrder="stroke" stroke="#131722" strokeWidth="3">{drawing.text}</text></g>;
+    if(drawing.tool==="rectangle")return <g key={drawing.id}><rect x={Math.min(first.x,second.x)} y={Math.min(first.y,second.y)} width={Math.max(1,Math.abs(second.x-first.x))} height={Math.max(1,Math.abs(second.y-first.y))} fill="rgba(41,98,255,.10)" stroke={blue} strokeWidth="1.5"/>{handles}</g>;
+    if(drawing.tool==="ellipse")return <g key={drawing.id}><ellipse cx={(first.x+second.x)/2} cy={(first.y+second.y)/2} rx={Math.max(1,Math.abs(second.x-first.x)/2)} ry={Math.max(1,Math.abs(second.y-first.y)/2)} fill="rgba(41,98,255,.08)" stroke={blue} strokeWidth="1.5"/>{handles}</g>;
+    if(drawing.tool==="parallel-channel"){
+      const dx=second.x-first.x,dy=second.y-first.y,len=Math.max(1,Math.hypot(dx,dy)),nx=-dy/len,ny=dx/len;
+      const offset=(third.x-first.x)*nx+(third.y-first.y)*ny,ox=nx*offset,oy=ny*offset;
+      return <g key={drawing.id}><polygon points={`${first.x},${first.y} ${second.x},${second.y} ${second.x+ox},${second.y+oy} ${first.x+ox},${first.y+oy}`} fill="rgba(41,98,255,.08)"/><line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke={blue} strokeWidth="1.5"/><line x1={first.x+ox} y1={first.y+oy} x2={second.x+ox} y2={second.y+oy} stroke={blue} strokeWidth="1.5"/><line x1={first.x} y1={first.y} x2={first.x+ox} y2={first.y+oy} stroke={blue} strokeDasharray="3 3"/><line x1={second.x} y1={second.y} x2={second.x+ox} y2={second.y+oy} stroke={blue} strokeDasharray="3 3"/>{handles}</g>;
     }
-
-    if (drawing.tool === "rectangle") {
-      return (
-        <g key={drawing.id}>
-          <rect
-            x={Math.min(first.x, second.x)}
-            y={Math.min(first.y, second.y)}
-            width={Math.max(1, Math.abs(second.x - first.x))}
-            height={Math.max(1, Math.abs(second.y - first.y))}
-            fill="rgba(59, 130, 246, 0.10)"
-            stroke="#60a5fa"
-            strokeWidth="1.5"
-          />
-          <circle cx={first.x} cy={first.y} r="3" fill="#60a5fa" />
-          <circle cx={second.x} cy={second.y} r="3" fill="#60a5fa" />
-        </g>
-      );
+    if(drawing.tool==="fibonacci"||drawing.tool==="fib-extension"){
+      const left=drawing.tool==="fibonacci"?Math.min(first.x,second.x):third.x,right=drawing.tool==="fibonacci"?Math.max(first.x,second.x):chartSize.width;
+      const levels=drawing.tool==="fibonacci"?[0,.236,.382,.5,.618,.786,1]:[0,.618,1,1.272,1.618,2.618];
+      const startPrice=drawing.tool==="fibonacci"?drawing.points[0].price:drawing.points[2].price, move=drawing.points[1].price-drawing.points[0].price;
+      return <g key={drawing.id}>{levels.map(level=>{const price=startPrice+move*level,y=candleSeriesRef.current?.priceToCoordinate(price);if(y==null)return null;return <g key={level}><line x1={left} y1={y} x2={right} y2={y} stroke={blue} strokeDasharray="5 3"/><text x={right+5} y={y-4} fill="#9dbbff" fontSize="10">{level.toFixed(3)} · {price.toFixed(price>=100?2:5)}</text></g>;})}{handles}</g>;
     }
-
-    const left = Math.min(first.x, second.x);
-    const right = Math.max(first.x, second.x);
-    const priceDelta = drawing.points[1].price - drawing.points[0].price;
-
-    return (
-      <g key={drawing.id}>
-        {fibLevels.map((level) => {
-          const price = drawing.points[0].price + priceDelta * level.value;
-          const y = candleSeriesRef.current?.priceToCoordinate(price);
-          if (y === null || y === undefined) return null;
-          return (
-            <g key={level.label}>
-              <line x1={left} y1={y} x2={right} y2={y} stroke="#b48bf4" strokeWidth="1" strokeDasharray="5 3" />
-              <text x={right + 6} y={y - 4} fill="#c5a7f7" fontSize="10">
-                {level.label} · {price.toFixed(price >= 100 ? 2 : 5)}
-              </text>
-            </g>
-          );
-        })}
-        <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke="#b48bf4" strokeWidth="1" opacity="0.65" />
-      </g>
-    );
+    if(drawing.tool==="long-position"||drawing.tool==="short-position"){
+      const entry=drawing.points[0].price,stop=drawing.points[1].price,risk=Math.max(Math.abs(entry-stop),Math.abs(entry)*.0001);
+      const target=entry+(drawing.tool==="long-position"?1:-1)*risk*1.5;
+      const entryY=candleSeriesRef.current?.priceToCoordinate(entry),stopY=candleSeriesRef.current?.priceToCoordinate(stop),targetY=candleSeriesRef.current?.priceToCoordinate(target);
+      if(entryY==null||stopY==null||targetY==null)return null;
+      const left=Math.min(first.x,second.x),right=Math.min(chartSize.width,left+130);
+      return <g key={drawing.id}><rect x={left} y={Math.min(entryY,targetY)} width={Math.max(8,right-left)} height={Math.max(1,Math.abs(entryY-targetY))} fill="rgba(8,153,129,.18)" stroke="#089981"/><rect x={left} y={Math.min(entryY,stopY)} width={Math.max(8,right-left)} height={Math.max(1,Math.abs(entryY-stopY))} fill="rgba(242,54,69,.16)" stroke="#f23645"/><line x1={left} y1={entryY} x2={right} y2={entryY} stroke="#d1d4dc" strokeDasharray="3 3"/><text x={right-5} y={entryY-5} textAnchor="end" fill="#d1d4dc" fontSize="10">{drawing.tool==="long-position"?"LONG":"SHORT"} · R:R 1.5</text>{handles}</g>;
+    }
+    const delta=drawing.points[1].price-drawing.points[0].price,pct=drawing.points[0].price===0?0:delta/drawing.points[0].price*100;
+    if(drawing.tool==="ray"||drawing.tool==="extended-line"){
+      const dx=second.x-first.x,dy=second.y-first.y,slope=dx===0?0:dy/dx,x1=drawing.tool==="extended-line"?0:first.x,x2=chartSize.width;
+      return <g key={drawing.id}><line x1={x1} y1={first.y+slope*(x1-first.x)} x2={x2} y2={first.y+slope*(x2-first.x)} stroke={blue} strokeWidth="1.5"/>{handles}</g>;
+    }
+    if(drawing.tool==="shape-arrow")return <g key={drawing.id}><line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke={blue} strokeWidth="1.8" markerEnd="url(#chart-drawing-arrow)"/>{handles}</g>;
+    return <g key={drawing.id}><line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke={blue} strokeWidth="1.5"/>{(drawing.tool==="info-line"||drawing.tool==="measure")&&<g><rect x={(first.x+second.x)/2-62} y={(first.y+second.y)/2-24} width="124" height="20" rx="3" fill="#1e222d" stroke="#363a45"/><text x={(first.x+second.x)/2} y={(first.y+second.y)/2-10} textAnchor="middle" fill="#d1d4dc" fontSize="10">{delta>=0?"+":""}{delta.toFixed(2)} ({pct>=0?"+":""}{pct.toFixed(2)}%)</text></g>}{handles}</g>;
   }) : [];
 
-  let draftNode = null;
-  if (draftPoint && pointerPosition) {
-    const first = coordinateFor(draftPoint);
-    if (first) {
-      if (activeTool === "rectangle") {
-        draftNode = (
-          <rect
-            x={Math.min(first.x, pointerPosition.x)}
-            y={Math.min(first.y, pointerPosition.y)}
-            width={Math.max(1, Math.abs(pointerPosition.x - first.x))}
-            height={Math.max(1, Math.abs(pointerPosition.y - first.y))}
-            fill="rgba(59, 130, 246, 0.08)"
-            stroke="#60a5fa"
-            strokeDasharray="4 3"
-          />
-        );
-      } else {
-        draftNode = (
-          <line
-            x1={first.x}
-            y1={first.y}
-            x2={pointerPosition.x}
-            y2={pointerPosition.y}
-            stroke={activeTool === "trend" ? "#f0b84b" : "#b48bf4"}
-            strokeWidth="1.5"
-            strokeDasharray="5 3"
-          />
-        );
-      }
+  let draftNode=null;
+  if(draftPoints.length>0&&pointerPosition){
+    const last=coordinateFor(draftPoints[draftPoints.length-1]);
+    if(last){
+      if(activeTool==="rectangle")draftNode=<rect x={Math.min(last.x,pointerPosition.x)} y={Math.min(last.y,pointerPosition.y)} width={Math.max(1,Math.abs(pointerPosition.x-last.x))} height={Math.max(1,Math.abs(pointerPosition.y-last.y))} fill="rgba(41,98,255,.08)" stroke="#2962ff" strokeDasharray="4 3"/>;
+      else if(activeTool==="ellipse")draftNode=<ellipse cx={(last.x+pointerPosition.x)/2} cy={(last.y+pointerPosition.y)/2} rx={Math.max(1,Math.abs(pointerPosition.x-last.x)/2)} ry={Math.max(1,Math.abs(pointerPosition.y-last.y)/2)} fill="rgba(41,98,255,.08)" stroke="#2962ff" strokeDasharray="4 3"/>;
+      else draftNode=<line x1={last.x} y1={last.y} x2={pointerPosition.x} y2={pointerPosition.y} stroke="#2962ff" strokeWidth="1.5" strokeDasharray="5 3"/>;
     }
   }
+  const drawingHint=activeTool==="eraser"?(drawingsLocked?"Unlock drawings to erase":"Click a drawing to erase"):draftPoints.length>0?`Select point ${draftPoints.length+1} of ${requiredPoints(activeTool)}`:activeTool==="text"?"Click to place a text note":"Click on the chart to start drawing";
 
   return (
     <>
@@ -768,14 +764,11 @@ export default function MarketChart({
         onPointerDown={handleDrawingPointerDown}
         onPointerMove={handleDrawingPointerMove}
       >
+        <defs><marker id="chart-drawing-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2962ff"/></marker></defs>
         {drawingNodes}
         {draftNode}
       </svg>
-      {isDrawingTool && (
-        <div className="drawing-hint">
-          {draftPoint ? "Select the second point" : "Select the first point"}
-        </div>
-      )}
+      {isDrawingTool && <div className="drawing-hint">{drawingHint}</div>}
       {isLoadingOlder && <div className="history-loading">LOADING OLDER CANDLES…</div>}
       {!isLoadingOlder && olderError && (
         <button className="history-error" onClick={() => onLoadOlder()}>

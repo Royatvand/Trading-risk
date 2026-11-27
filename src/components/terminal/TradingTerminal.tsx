@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown,
-  ChevronLeft, CircleHelp, Code2, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
-  MoreHorizontal, MousePointer2, Plus, Search, Settings2, SlidersHorizontal,
-  Square, Star, Trash2, TrendingUp, Undo2, Redo2, Waves, X
+  Activity, ArrowLeftRight, ArrowUpRight, Bell, Bookmark, CandlestickChart, ChevronDown,
+  ChevronLeft, ChevronRight, CircleHelp, Code2, Clock3, Crosshair, Circle, Eye, Eraser,
+  GitMerge, Grid2X2, Lock, Magnet, Maximize2, Minus, MoveHorizontal, MoveVertical,
+  MoreHorizontal, MousePointer2, Plus, Repeat, Ruler, Search, Settings2, Shapes,
+  SlidersHorizontal, Square, Star, StickyNote, TrendingDown, TrendingUp, Trash2,
+  Type, Undo2, Redo2, Unlock, Waves, X
 } from "lucide-react";
 import MarketChart from "./MarketChart";
 import PineEditorPanel from "./PineEditorPanel";
@@ -15,7 +17,56 @@ import { useBinanceWatchlist } from "@/features/market-data/useBinanceWatchlist"
 import type { ChartInterval, Ticker24h } from "@/features/market-data/types";
 import type { EmaPeriod, OscillatorType } from "@/features/indicators/calculations";
 
-type DrawingTool = "cursor" | "crosshair" | "trend" | "rectangle" | "fibonacci";
+type DrawingTool =
+  | "cursor" | "crosshair" | "eraser"
+  | "trend-line" | "ray" | "info-line" | "extended-line"
+  | "horizontal-line" | "horizontal-ray" | "vertical-line" | "crossline"
+  | "parallel-channel" | "fibonacci" | "fib-extension"
+  | "rectangle" | "ellipse" | "shape-arrow"
+  | "long-position" | "short-position" | "measure" | "text";
+
+type DrawingToolOption = { id: DrawingTool; label: string; icon: React.ElementType };
+type DrawingToolGroup = { id: string; label: string; icon: React.ElementType; tools: DrawingToolOption[] };
+
+const drawingToolGroups: DrawingToolGroup[] = [
+  { id: "cursor", label: "Cursors", icon: Crosshair, tools: [
+    { id: "crosshair", label: "Cross cursor", icon: Crosshair },
+    { id: "cursor", label: "Arrow cursor", icon: MousePointer2 },
+    { id: "eraser", label: "Eraser", icon: Eraser },
+  ]},
+  { id: "trend", label: "Trend line tools", icon: TrendingUp, tools: [
+    { id: "trend-line", label: "Trend line", icon: TrendingUp },
+    { id: "ray", label: "Ray", icon: ArrowUpRight },
+    { id: "info-line", label: "Info line", icon: Ruler },
+    { id: "extended-line", label: "Extended line", icon: ArrowLeftRight },
+    { id: "horizontal-line", label: "Horizontal line", icon: Minus },
+    { id: "horizontal-ray", label: "Horizontal ray", icon: MoveHorizontal },
+    { id: "vertical-line", label: "Vertical line", icon: MoveVertical },
+    { id: "crossline", label: "Cross line", icon: Crosshair },
+  ]},
+  { id: "channels", label: "Channels", icon: GitMerge, tools: [
+    { id: "parallel-channel", label: "Parallel channel", icon: GitMerge },
+  ]},
+  { id: "fibonacci", label: "Gann and Fibonacci", icon: Waves, tools: [
+    { id: "fibonacci", label: "Fib retracement", icon: Waves },
+    { id: "fib-extension", label: "Trend-based Fib extension", icon: Activity },
+  ]},
+  { id: "shapes", label: "Geometric shapes", icon: Shapes, tools: [
+    { id: "rectangle", label: "Rectangle", icon: Square },
+    { id: "ellipse", label: "Ellipse", icon: Circle },
+    { id: "shape-arrow", label: "Arrow", icon: ArrowUpRight },
+  ]},
+  { id: "forecast", label: "Forecasting and measurement", icon: Ruler, tools: [
+    { id: "long-position", label: "Long position", icon: TrendingUp },
+    { id: "short-position", label: "Short position", icon: TrendingDown },
+    { id: "measure", label: "Price range", icon: Ruler },
+  ]},
+  { id: "annotation", label: "Annotation tools", icon: Type, tools: [
+    { id: "text", label: "Text note", icon: StickyNote },
+  ]},
+];
+
+type MagnetMode = "off" | "weak" | "strong";
 
 const symbols = [
   { symbol: "BTCUSDT", name: "Bitcoin" },
@@ -76,7 +127,11 @@ export default function TradingTerminal() {
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [timeframe, setTimeframe] = useState<ChartInterval>("15m");
   const [activeTool, setActiveTool] = useState<DrawingTool>("crosshair");
+  const [openToolGroup, setOpenToolGroup] = useState<string | null>(null);
   const [drawingsVisible, setDrawingsVisible] = useState(true);
+  const [drawingsLocked, setDrawingsLocked] = useState(false);
+  const [keepDrawing, setKeepDrawing] = useState(false);
+  const [magnetMode, setMagnetMode] = useState<MagnetMode>("off");
   const [clearDrawingsSignal, setClearDrawingsSignal] = useState(0);
   const [watchlistOpen, setWatchlistOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("Trading Panel");
@@ -274,27 +329,55 @@ export default function TradingTerminal() {
       </section>
 
       <div className="workspace">
-        <aside className="drawing-toolbar">
-          <ToolButton icon={MousePointer2} label="Cursor" active={activeTool === "cursor"} onClick={() => setActiveTool("cursor")} />
-          <ToolButton icon={Crosshair} label="Crosshair" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
+        <aside className="drawing-toolbar" aria-label="Drawing tools">
+          <div className="tool-groups">
+            {drawingToolGroups.map((group) => {
+              const chosen = group.tools.find((tool) => tool.id === activeTool);
+              const Icon = chosen?.icon ?? group.icon;
+              return (
+                <div className="tool-group" key={group.id}>
+                  <button
+                    className={"tool-button tool-group-trigger" + (chosen ? " active" : "") + (openToolGroup === group.id ? " menu-open" : "")}
+                    title={group.label}
+                    aria-label={group.label}
+                    aria-haspopup="menu"
+                    aria-expanded={openToolGroup === group.id}
+                    onClick={() => setOpenToolGroup((current) => current === group.id ? null : group.id)}
+                  >
+                    <Icon size={18} strokeWidth={1.65} />
+                    <ChevronRight className="tool-chevron" size={10} />
+                  </button>
+                  {openToolGroup === group.id && (
+                    <div className="tool-flyout" role="menu" aria-label={group.label}>
+                      <div className="tool-flyout-title">{group.label}</div>
+                      {group.tools.map((tool) => {
+                        const ToolIcon = tool.icon;
+                        return (
+                          <button key={tool.id}
+                            className={"tool-flyout-item" + (activeTool === tool.id ? " selected" : "")}
+                            role="menuitem"
+                            onClick={() => { setActiveTool(tool.id); setOpenToolGroup(null); }}
+                          >
+                            <ToolIcon size={16} strokeWidth={1.65} />
+                            <span>{tool.label}</span>
+                            {activeTool === tool.id && <span className="tool-selected-dot" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           <div className="tool-separator" />
-          <ToolButton icon={TrendingUp} label="Trend line" active={activeTool === "trend"} onClick={() => setActiveTool("trend")} />
-          <ToolButton icon={Square} label="Rectangle" active={activeTool === "rectangle"} onClick={() => setActiveTool("rectangle")} />
-          <ToolButton icon={Waves} label="Fibonacci" active={activeTool === "fibonacci"} onClick={() => setActiveTool("fibonacci")} />
-          <div className="tool-separator" />
-          <div className="tool-spacer" />
-          <ToolButton
-            icon={Eye}
-            label={drawingsVisible ? "Hide drawings" : "Show drawings"}
-            active={!drawingsVisible}
-            onClick={() => setDrawingsVisible((visible) => !visible)}
-          />
-          <ToolButton
-            icon={Trash2}
-            label="Remove all drawings"
-            onClick={() => setClearDrawingsSignal((signal) => signal + 1)}
-          />
-          <ToolButton icon={Bookmark} label="Drawings auto-saved" active />
+          <div className="tool-utility-group">
+            <ToolButton icon={Magnet} label={"Magnet: " + (magnetMode === "off" ? "Off" : magnetMode === "weak" ? "Weak" : "Strong")} active={magnetMode !== "off"} onClick={() => setMagnetMode((mode) => mode === "off" ? "weak" : mode === "weak" ? "strong" : "off")} />
+            <ToolButton icon={Repeat} label="Keep drawing" active={keepDrawing} onClick={() => setKeepDrawing((value) => !value)} />
+            <ToolButton icon={drawingsLocked ? Lock : Unlock} label={drawingsLocked ? "Unlock drawings" : "Lock drawings"} active={drawingsLocked} onClick={() => setDrawingsLocked((value) => !value)} />
+            <ToolButton icon={Eye} label={drawingsVisible ? "Hide drawings" : "Show drawings"} active={!drawingsVisible} onClick={() => setDrawingsVisible((visible) => !visible)} />
+            <ToolButton icon={Trash2} label="Remove all drawings" onClick={() => setClearDrawingsSignal((signal) => signal + 1)} />
+          </div>
         </aside>
 
         <section className="chart-column">
@@ -346,6 +429,10 @@ export default function TradingTerminal() {
               status={status}
               error={error}
               activeTool={activeTool}
+              magnetMode={magnetMode}
+              keepDrawing={keepDrawing}
+              drawingsLocked={drawingsLocked}
+              onDrawingComplete={() => setActiveTool("crosshair")}
               enabledEma={enabledEma}
               activeOscillator={activeOscillator}
               pineResult={pineResult}

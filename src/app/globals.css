@@ -487,3 +487,24 @@ html, body { background: #131722; color: #d1d4dc; }
   .pine-output { border-left: 0; border-top: 1px solid #2a2e39; flex-basis: 35%; }
   .pine-select { max-width: 110px; }
 }
+
+
+/* TradingView-inspired drawing rail and grouped tool flyouts */
+.drawing-toolbar { width:48px; flex:0 0 48px; position:relative; z-index:12; overflow:visible; gap:0; padding:7px 4px; background:#1e222d; border-right:1px solid #2a2e39; }
+.tool-groups,.tool-utility-group { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.tool-groups { width:100%; }
+.tool-group { position:relative; width:100%; display:flex; justify-content:center; }
+.tool-button { width:36px; height:35px; flex:0 0 35px; position:relative; display:grid; place-items:center; border:0; border-radius:4px; background:transparent; color:#9598a3; cursor:pointer; }
+.tool-button:hover,.tool-button.active,.tool-button.menu-open { color:#d1d4dc; background:#2a2e39; }
+.tool-button.active::before { content:""; position:absolute; left:-5px; top:7px; bottom:7px; width:2px; border-radius:2px; background:#2962ff; }
+.tool-group-trigger .tool-chevron { position:absolute; right:1px; bottom:2px; color:#787b86; opacity:0; }
+.tool-group-trigger:hover .tool-chevron,.tool-group-trigger.menu-open .tool-chevron { opacity:1; }
+.tool-flyout { position:absolute; z-index:70; left:calc(100% + 8px); top:0; width:228px; max-height:min(70vh,560px); overflow-y:auto; padding:7px; border:1px solid #363a45; border-radius:6px; background:#1e222d; box-shadow:0 12px 32px #0009; }
+.tool-flyout-title { padding:5px 8px 8px; color:#787b86; font-size:9px; font-weight:700; letter-spacing:.65px; text-transform:uppercase; }
+.tool-flyout-item { width:100%; min-height:33px; display:flex; align-items:center; gap:10px; padding:5px 8px; border:0; border-radius:4px; background:transparent; color:#b2b5be; text-align:left; font-size:11px; cursor:pointer; }
+.tool-flyout-item:hover,.tool-flyout-item.selected { background:#2a2e39; color:#d1d4dc; }
+.tool-flyout-item.selected { box-shadow:inset 2px 0 0 #2962ff; }
+.tool-selected-dot { width:5px; height:5px; margin-left:auto; border-radius:50%; background:#2962ff; }
+.tool-utility-group { width:100%; gap:2px; }
+.tool-utility-group .tool-button { width:36px; }
+@media(max-width:760px){.drawing-toolbar{width:41px;flex-basis:41px;padding-left:2px;padding-right:2px}.tool-button{width:33px;height:32px;flex-basis:32px}.tool-flyout{width:210px;max-height:65vh}}
