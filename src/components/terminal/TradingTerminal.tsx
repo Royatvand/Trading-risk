@@ -221,7 +221,7 @@ export default function TradingTerminal() {
 
           <div className="chart-wrap">
             <div className="chart-watermark"><span>CM</span><strong>CHARTMASTERS</strong><small>MARKET ANALYSIS</small></div>
-            <MarketChart key={symbol + ":" + timeframe} symbol={symbol} timeframe={timeframe} candles={candles} />
+            <MarketChart key={symbol + ":" + timeframe} symbol={symbol} timeframe={timeframe} candles={candles} status={status} error={error} />
             <div className="chart-disclaimer">{statusLabel}{error ? " · " + error : ""}</div>
           </div>
 

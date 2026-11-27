@@ -49,7 +49,11 @@ export function useBinanceMarket(symbol: string, interval: ChartInterval) {
 
         socket.onopen = () => {
           retryAttempt = 0;
-          updateState((current) => ({ ...current, status: "live", error: null }));
+          updateState((current) => ({
+            ...current,
+            status: "live",
+            error: current.candles.length > 0 ? null : current.error,
+          }));
         };
 
         socket.onmessage = (message) => {

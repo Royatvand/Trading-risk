@@ -16,9 +16,11 @@ type Props = {
   symbol: string;
   timeframe: string;
   candles: MarketCandle[];
+  status: "loading" | "connecting" | "live" | "reconnecting" | "error";
+  error: string | null;
 };
 
-export default function MarketChart({ symbol, timeframe, candles }: Props) {
+export default function MarketChart({ symbol, timeframe, candles, status, error }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -154,5 +156,15 @@ export default function MarketChart({ symbol, timeframe, candles }: Props) {
     });
   }, [candles]);
 
-  return <div ref={containerRef} className="chart-canvas" aria-label={symbol + " " + timeframe + " Binance candlestick chart"} />;
+  return (
+    <>
+      <div ref={containerRef} className="chart-canvas" aria-label={symbol + " " + timeframe + " Binance candlestick chart"} />
+      {candles.length === 0 && (
+        <div className="chart-empty-state">
+          <strong>{status === "loading" ? "Loading market history" : "Waiting for Binance market data"}</strong>
+          <span>{error ?? "Connecting to Binance Spot public market feed..."}</span>
+        </div>
+      )}
+    </>
+  );
 }
