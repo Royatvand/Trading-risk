@@ -1,5 +1,6 @@
 export { runPine } from "./interpreter";
 export { PINE_EXAMPLES, DEFAULT_PINE_SOURCE } from "./examples";
+export { highlightLine, type HighlightSpan } from "./highlight";
 export type {
   PineResult,
   PinePlot,

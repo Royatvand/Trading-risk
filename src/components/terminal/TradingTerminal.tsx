@@ -380,7 +380,14 @@ export default function TradingTerminal() {
               {activeOscillator === "rsi" && <span className="indicator-chip rsi-chip">RSI 14</span>}
               {activeOscillator === "macd" && <span className="indicator-chip macd-chip">MACD 12 / 26 / 9</span>}
               {pineResult && pineResult.errors.length === 0 && (
-                <span className="indicator-chip pine-chip">Pine · {pineResult.title}</span>
+                <span className="indicator-chip pine-chip">
+                  <span className="pine-chip-dots" aria-hidden>
+                    {pineResult.plots.slice(0, 4).map((plot, index) => (
+                      <i key={index} style={{ background: plot.color }} />
+                    ))}
+                  </span>
+                  {pineResult.title}
+                </span>
               )}
               {pineResult && pineResult.errors.length > 0 && (
                 <span className="indicator-chip pine-chip error">Pine error</span>
@@ -397,6 +404,7 @@ export default function TradingTerminal() {
               onSourceChange={setPineSource}
               onRun={() => setPineActive(pineSource)}
               onRemove={() => setPineActive(null)}
+              onClose={() => setActiveTab("Trading Panel")}
               applied={pineActive !== null}
               result={pineResult}
             />
