@@ -78,7 +78,7 @@ export default function TradingTerminal() {
   const [activeTool, setActiveTool] = useState<DrawingTool>("crosshair");
   const [drawingsVisible, setDrawingsVisible] = useState(true);
   const [clearDrawingsSignal, setClearDrawingsSignal] = useState(0);
-  const [watchlistOpen, setWatchlistOpen] = useState(true);
+  const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Trading Panel");
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
