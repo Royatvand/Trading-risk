@@ -38,6 +38,7 @@ export function useBinanceMarket(symbol: string, interval: ChartInterval) {
     let socket: WebSocket | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let retryAttempt = 0;
+    let streamHostIndex = 0;
     const controller = new AbortController();
 
     loadingOlderRef.current = false;
@@ -56,7 +57,7 @@ export function useBinanceMarket(symbol: string, interval: ChartInterval) {
       }));
 
       try {
-        socket = new WebSocket(createKlineStreamUrl(symbol, interval));
+        socket = new WebSocket(createKlineStreamUrl(symbol, interval, streamHostIndex));
 
         socket.onopen = () => {
           retryAttempt = 0;
@@ -90,6 +91,7 @@ export function useBinanceMarket(symbol: string, interval: ChartInterval) {
 
         socket.onclose = () => {
           if (disposed) return;
+          streamHostIndex = (streamHostIndex + 1) % 3;
           updateState((current) => ({ ...current, status: "reconnecting" }));
           const delay = Math.min(30_000, 1_000 * (2 ** Math.min(retryAttempt, 5)));
           retryAttempt += 1;
