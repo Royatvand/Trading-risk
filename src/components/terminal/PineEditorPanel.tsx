@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Play, Trash2, X } from "lucide-react";
+import { ChevronDownIcon, CloseIcon, PlayIcon, TrashIcon } from "./icons";
 import { PINE_EXAMPLES, highlightLine, type PineResult } from "@/features/pine";
 
 type Props = {
@@ -165,22 +165,22 @@ export default function PineEditorPanel({
               <option key={example.name} value={index}>{example.name}</option>
             ))}
           </select>
-          <ChevronDown size={12} aria-hidden />
+          <ChevronDownIcon size={20} />
         </label>
 
         <span className={"pine-status " + statusClass}><i />{statusText}</span>
         <div className="pine-spacer" />
 
         <button className="pine-button primary" onClick={onRun} title="Add to chart (Ctrl+Enter)">
-          <Play size={12} fill="currentColor" />
+          <PlayIcon size={18} />
           {applied ? "Update on chart" : "Add to chart"}
           <kbd>Ctrl ↵</kbd>
         </button>
         <button className="pine-button" onClick={onRemove} disabled={!applied} title="Remove from chart">
-          <Trash2 size={13} /> Remove
+          <TrashIcon size={20} /> Remove
         </button>
         <button className="pine-icon" onClick={onClose} title="Close editor" aria-label="Close editor">
-          <X size={15} />
+          <CloseIcon size={22} />
         </button>
       </div>
 

@@ -50,13 +50,13 @@ type Props = {
 };
 
 const fibLevels = [
-  { value: 0, label: "0" },
-  { value: 0.236, label: "0.236" },
-  { value: 0.382, label: "0.382" },
-  { value: 0.5, label: "0.5" },
-  { value: 0.618, label: "0.618" },
-  { value: 0.786, label: "0.786" },
-  { value: 1, label: "1" },
+  { value: 0, label: "0", color: "#787b86" },
+  { value: 0.236, label: "0.236", color: "#f23645" },
+  { value: 0.382, label: "0.382", color: "#ff9800" },
+  { value: 0.5, label: "0.5", color: "#4caf50" },
+  { value: 0.618, label: "0.618", color: "#089981" },
+  { value: 0.786, label: "0.786", color: "#00bcd4" },
+  { value: 1, label: "1", color: "#787b86" },
 ];
 
 export default function MarketChart({
@@ -116,25 +116,25 @@ export default function MarketChart({
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: "#0b0e11" },
-        textColor: "#848e9c",
+        background: { type: ColorType.Solid, color: "#131722" },
+        textColor: "#b2b5be",
         fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "#1b2028" },
-        horzLines: { color: "#1b2028" },
+        vertLines: { color: "#1e222d" },
+        horzLines: { color: "#1e222d" },
       },
       crosshair: {
-        vertLine: { color: "#758696", width: 1, style: 3, labelBackgroundColor: "#303843" },
-        horzLine: { color: "#758696", width: 1, style: 3, labelBackgroundColor: "#303843" },
+        vertLine: { color: "#9598a1", width: 1, style: 2, labelBackgroundColor: "#363a45" },
+        horzLine: { color: "#9598a1", width: 1, style: 2, labelBackgroundColor: "#363a45" },
       },
       rightPriceScale: {
-        borderColor: "#252b34",
+        borderColor: "#2a2e39",
         scaleMargins: { top: 0.08, bottom: 0.2 },
       },
       timeScale: {
-        borderColor: "#252b34",
+        borderColor: "#2a2e39",
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 8,
@@ -146,12 +146,12 @@ export default function MarketChart({
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#0ecb81",
-      downColor: "#f6465d",
-      borderUpColor: "#0ecb81",
-      borderDownColor: "#f6465d",
-      wickUpColor: "#0ecb81",
-      wickDownColor: "#f6465d",
+      upColor: "#089981",
+      downColor: "#f23645",
+      borderUpColor: "#089981",
+      borderDownColor: "#f23645",
+      wickUpColor: "#089981",
+      wickDownColor: "#f23645",
       priceLineVisible: true,
       lastValueVisible: true,
     });
@@ -233,7 +233,7 @@ export default function MarketChart({
       volumeSeries.setData(candles.map((candle) => ({
         time: toChartTime(candle.openTime),
         value: candle.volume,
-        color: candle.close >= candle.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+        color: candle.close >= candle.open ? "rgba(8, 153, 129, 0.5)" : "rgba(242, 54, 69, 0.5)",
       })));
       chart.timeScale().fitContent();
       firstCandleTimeRef.current = firstTime;
@@ -257,7 +257,7 @@ export default function MarketChart({
       volumeSeries.setData(candles.map((candle) => ({
         time: toChartTime(candle.openTime),
         value: candle.volume,
-        color: candle.close >= candle.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+        color: candle.close >= candle.open ? "rgba(8, 153, 129, 0.5)" : "rgba(242, 54, 69, 0.5)",
       })));
       firstCandleTimeRef.current = firstTime;
 
@@ -281,7 +281,7 @@ export default function MarketChart({
     volumeSeries.update({
       time: toChartTime(latest.openTime),
       value: latest.volume,
-      color: latest.close >= latest.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+      color: latest.close >= latest.open ? "rgba(8, 153, 129, 0.5)" : "rgba(242, 54, 69, 0.5)",
     });
   }, [candles, toChartTime]);
 
@@ -676,9 +676,9 @@ export default function MarketChart({
     if (drawing.tool === "trend") {
       return (
         <g key={drawing.id}>
-          <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke="#f0b84b" strokeWidth="2" />
-          <circle cx={first.x} cy={first.y} r="3" fill="#f0b84b" />
-          <circle cx={second.x} cy={second.y} r="3" fill="#f0b84b" />
+          <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke="#2962ff" strokeWidth="2" />
+          <circle cx={first.x} cy={first.y} r="4" fill="#131722" stroke="#2962ff" strokeWidth="2" />
+          <circle cx={second.x} cy={second.y} r="4" fill="#131722" stroke="#2962ff" strokeWidth="2" />
         </g>
       );
     }
@@ -691,12 +691,12 @@ export default function MarketChart({
             y={Math.min(first.y, second.y)}
             width={Math.max(1, Math.abs(second.x - first.x))}
             height={Math.max(1, Math.abs(second.y - first.y))}
-            fill="rgba(59, 130, 246, 0.10)"
-            stroke="#60a5fa"
+            fill="rgba(41, 98, 255, 0.15)"
+            stroke="#2962ff"
             strokeWidth="1.5"
           />
-          <circle cx={first.x} cy={first.y} r="3" fill="#60a5fa" />
-          <circle cx={second.x} cy={second.y} r="3" fill="#60a5fa" />
+          <circle cx={first.x} cy={first.y} r="4" fill="#131722" stroke="#2962ff" strokeWidth="2" />
+          <circle cx={second.x} cy={second.y} r="4" fill="#131722" stroke="#2962ff" strokeWidth="2" />
         </g>
       );
     }
@@ -713,14 +713,14 @@ export default function MarketChart({
           if (y === null || y === undefined) return null;
           return (
             <g key={level.label}>
-              <line x1={left} y1={y} x2={right} y2={y} stroke="#b48bf4" strokeWidth="1" strokeDasharray="5 3" />
-              <text x={right + 6} y={y - 4} fill="#c5a7f7" fontSize="10">
+              <line x1={left} y1={y} x2={right} y2={y} stroke={level.color} strokeWidth="1" />
+              <text x={right + 6} y={y - 4} fill={level.color} fontSize="10">
                 {level.label} · {price.toFixed(price >= 100 ? 2 : 5)}
               </text>
             </g>
           );
         })}
-        <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke="#b48bf4" strokeWidth="1" opacity="0.65" />
+        <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke="#787b86" strokeWidth="1" strokeDasharray="4 3" />
       </g>
     );
   }) : [];
@@ -736,8 +736,8 @@ export default function MarketChart({
             y={Math.min(first.y, pointerPosition.y)}
             width={Math.max(1, Math.abs(pointerPosition.x - first.x))}
             height={Math.max(1, Math.abs(pointerPosition.y - first.y))}
-            fill="rgba(59, 130, 246, 0.08)"
-            stroke="#60a5fa"
+            fill="rgba(41, 98, 255, 0.1)"
+            stroke="#2962ff"
             strokeDasharray="4 3"
           />
         );
@@ -748,7 +748,7 @@ export default function MarketChart({
             y1={first.y}
             x2={pointerPosition.x}
             y2={pointerPosition.y}
-            stroke={activeTool === "trend" ? "#f0b84b" : "#b48bf4"}
+            stroke={activeTool === "trend" ? "#2962ff" : "#787b86"}
             strokeWidth="1.5"
             strokeDasharray="5 3"
           />

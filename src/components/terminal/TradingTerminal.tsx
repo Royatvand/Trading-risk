@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown,
-  ChevronLeft, CircleHelp, Code2, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
-  MoreHorizontal, MousePointer2, Plus, Search, Settings2, SlidersHorizontal,
-  Square, Star, Trash2, TrendingUp, Undo2, Redo2, Waves, X
-} from "lucide-react";
+  AlertIcon, BookmarkIcon, BrandMark, CalendarIcon, CandlesIcon, ChevronDownIcon, ChevronLeftIcon,
+  ClockIcon, CloseIcon, CodeIcon, CrosshairIcon, CursorIcon, EyeIcon, EyeOffIcon, FibonacciIcon,
+  FullscreenIcon, GridIcon, HelpIcon, IndicatorsIcon, LayoutIcon, MoreIcon, ObjectTreeIcon,
+  PlusIcon, RectangleIcon, RedoIcon, SearchIcon, SettingsIcon, StarIcon, TrashIcon,
+  TrendLineIcon, UndoIcon, WatchlistIcon, ReplayIcon,
+} from "./icons";
 import MarketChart from "./MarketChart";
 import PineEditorPanel from "./PineEditorPanel";
 import { DEFAULT_PINE_SOURCE, runPine } from "@/features/pine";
@@ -67,7 +68,7 @@ function ToolButton({ icon: Icon, label, active, onClick }: {
 }) {
   return (
     <button className={"tool-button" + (active ? " active" : "")} title={label} aria-label={label} onClick={onClick}>
-      <Icon size={17} strokeWidth={1.7} />
+      <Icon size={28} />
     </button>
   );
 }
@@ -82,7 +83,6 @@ export default function TradingTerminal() {
   const [activeTab, setActiveTab] = useState("Trading Panel");
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [favorite, setFavorite] = useState(true);
   const [indicatorMenuOpen, setIndicatorMenuOpen] = useState(false);
   const [enabledEma, setEnabledEma] = useState<EmaPeriod[]>([]);
   const [activeOscillator, setActiveOscillator] = useState<OscillatorType>("none");
@@ -159,7 +159,7 @@ export default function TradingTerminal() {
     <main className="terminal-shell">
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark"><CandlestickChart size={20} /></div>
+          <div className="brand-mark"><BrandMark size={24} /></div>
           <span>chart<span className="brand-accent">masters</span></span>
           <span className="brand-divider" />
           <span className="product-label">TERMINAL</span>
@@ -171,9 +171,9 @@ export default function TradingTerminal() {
           <span className="context-muted">BINANCE</span>
         </div>
         <div className="topbar-actions">
-          <button className="icon-action" title="Search"><Search size={17} /></button>
-          <button className="icon-action" title="Alerts"><Bell size={17} /></button>
-          <button className="icon-action" title="Settings"><Settings2 size={17} /></button>
+          <button className="icon-action" title="Search"><SearchIcon size={24} /></button>
+          <button className="icon-action" title="Alerts"><AlertIcon size={24} /></button>
+          <button className="icon-action" title="Settings"><SettingsIcon size={24} /></button>
           <div className="avatar">CM</div>
         </div>
       </header>
@@ -183,14 +183,14 @@ export default function TradingTerminal() {
           <button className="symbol-button" onClick={() => setSearchOpen(!searchOpen)}>
             <span className="coin-icon">₿</span>
             <span>{symbol}</span>
-            <ChevronDown size={14} />
+            <ChevronDownIcon size={20} />
           </button>
           {searchOpen && (
             <div className="symbol-popover">
               <div className="search-field">
-                <Search size={15} />
+                <SearchIcon size={22} />
                 <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search markets..." />
-                <button onClick={() => { setSearchOpen(false); setQuery(""); }}><X size={14} /></button>
+                <button onClick={() => { setSearchOpen(false); setQuery(""); }}><CloseIcon size={22} /></button>
               </div>
               {filteredSymbols.map((item) => {
                 const ticker = tickers[item.symbol];
@@ -207,17 +207,17 @@ export default function TradingTerminal() {
         <div className="toolbar-divider" />
         <div className="timeframes">
           {timeframes.map((frame) => <button key={frame} onClick={() => setTimeframe(frame)} className={timeframe === frame ? "timeframe active" : "timeframe"}>{frame}</button>)}
-          <button className="toolbar-icon" title="More timeframes"><ChevronDown size={14} /></button>
+          <button className="toolbar-icon" title="More timeframes"><ChevronDownIcon size={22} /></button>
         </div>
         <div className="toolbar-divider" />
-        <button className="toolbar-icon" title="Chart type"><CandlestickChart size={17} /></button>
+        <button className="toolbar-icon" title="Chart type"><CandlesIcon size={26} /></button>
         <div className="indicator-menu-control">
           <button
             className={"toolbar-action" + (indicatorMenuOpen ? " active" : "")}
             aria-expanded={indicatorMenuOpen}
             onClick={() => setIndicatorMenuOpen((open) => !open)}
           >
-            <Plus size={15} /> Indicators
+            <IndicatorsIcon size={26} /> Indicators
           </button>
           {indicatorMenuOpen && (
             <div className="indicator-popover" role="dialog" aria-label="Chart indicators">
@@ -262,82 +262,47 @@ export default function TradingTerminal() {
           onClick={() => setActiveTab((tab) => (tab === "Pine Editor" ? "Trading Panel" : "Pine Editor"))}
           title="Pine Script editor"
         >
-          <Code2 size={15} /> Pine
+          <CodeIcon size={24} /> Pine
         </button>
-        <button className="toolbar-icon optional" title="Alert"><Bell size={16} /></button>
-        <button className="toolbar-action optional"><Clock3 size={15} /> Replay</button>
+        <button className="toolbar-icon optional" title="Alert"><AlertIcon size={26} /></button>
+        <button className="toolbar-action optional"><ReplayIcon size={26} /> Replay</button>
         <div className="toolbar-spacer" />
-        <button className="toolbar-icon" title="Undo"><Undo2 size={17} /></button>
-        <button className="toolbar-icon" title="Redo"><Redo2 size={17} /></button>
-        <button className="toolbar-icon optional" title="Layout"><Grid2X2 size={17} /></button>
-        <button className="toolbar-icon" title="Fullscreen"><Maximize2 size={16} /></button>
+        <button className="toolbar-icon" title="Undo"><UndoIcon size={26} /></button>
+        <button className="toolbar-icon" title="Redo"><RedoIcon size={26} /></button>
+        <button className="toolbar-icon optional" title="Layout"><LayoutIcon size={26} /></button>
+        <button className="toolbar-icon" title="Fullscreen"><FullscreenIcon size={26} /></button>
       </section>
 
       <div className="workspace">
         <aside className="drawing-toolbar">
-          <ToolButton icon={MousePointer2} label="Cursor" active={activeTool === "cursor"} onClick={() => setActiveTool("cursor")} />
-          <ToolButton icon={Crosshair} label="Crosshair" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
+          <ToolButton icon={CursorIcon} label="Cursor" active={activeTool === "cursor"} onClick={() => setActiveTool("cursor")} />
+          <ToolButton icon={CrosshairIcon} label="Crosshair" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
           <div className="tool-separator" />
-          <ToolButton icon={TrendingUp} label="Trend line" active={activeTool === "trend"} onClick={() => setActiveTool("trend")} />
-          <ToolButton icon={Square} label="Rectangle" active={activeTool === "rectangle"} onClick={() => setActiveTool("rectangle")} />
-          <ToolButton icon={Waves} label="Fibonacci" active={activeTool === "fibonacci"} onClick={() => setActiveTool("fibonacci")} />
+          <ToolButton icon={TrendLineIcon} label="Trend line" active={activeTool === "trend"} onClick={() => setActiveTool("trend")} />
+          <ToolButton icon={RectangleIcon} label="Rectangle" active={activeTool === "rectangle"} onClick={() => setActiveTool("rectangle")} />
+          <ToolButton icon={FibonacciIcon} label="Fibonacci" active={activeTool === "fibonacci"} onClick={() => setActiveTool("fibonacci")} />
           <div className="tool-separator" />
           <div className="tool-spacer" />
           <ToolButton
-            icon={Eye}
+            icon={drawingsVisible ? EyeIcon : EyeOffIcon}
             label={drawingsVisible ? "Hide drawings" : "Show drawings"}
             active={!drawingsVisible}
             onClick={() => setDrawingsVisible((visible) => !visible)}
           />
           <ToolButton
-            icon={Trash2}
+            icon={TrashIcon}
             label="Remove all drawings"
             onClick={() => setClearDrawingsSignal((signal) => signal + 1)}
           />
-          <ToolButton icon={Bookmark} label="Drawings auto-saved" active />
+          <ToolButton icon={BookmarkIcon} label="Drawings auto-saved" active />
         </aside>
 
         <section className="chart-column">
-          <div className="chart-heading">
-            <div className="instrument-title">
-              <div className="coin-icon large">₿</div>
-              <div>
-                <div className="instrument-name">{symbol} <span className="market-tag">SPOT</span></div>
-                <div className="instrument-subtitle">{selected.name} / TetherUS · Binance</div>
-              </div>
-              <button className={"star-button" + (favorite ? " starred" : "")} onClick={() => setFavorite(!favorite)} title="Add to favorites"><Star size={16} fill={favorite ? "currentColor" : "none"} /></button>
-            </div>
-            <div className="quote-summary">
-              <div className="quote-price">{formatPrice(lastPrice)}</div>
-              <div className={changeClass(selectedTicker?.priceChangePercent)}>
-                {formatChange(selectedTicker?.priceChangePercent)} <span>24h</span>
-              </div>
-            </div>
-            <div className="ohlc-summary">
-              <span>O <b>{formatPrice(latestCandle?.open)}</b></span>
-              <span>H <b>{formatPrice(latestCandle?.high)}</b></span>
-              <span>L <b>{formatPrice(latestCandle?.low)}</b></span>
-              <span>C <b>{formatPrice(latestCandle?.close)}</b></span>
-            </div>
-          </div>
-
-          <div className="chart-status-row">
-            <div className="chart-legend">
-              <span className="legend-symbol">{symbol}</span>
-              <span className="legend-timeframe">{timeframe}</span>
-              <span className={changeClass(selectedTicker?.priceChangePercent)}>{formatChange(selectedTicker?.priceChangePercent)} (24h)</span>
-              <span className="legend-timeframe">{candles.length.toLocaleString("en-US")} candles</span>
-            </div>
-            <div className="chart-status-actions">
-              <button title="Compare"><ArrowLeftRight size={15} /></button>
-              <button title="Indicators" onClick={() => setIndicatorMenuOpen((open) => !open)}><Activity size={15} /></button>
-              <button title="Settings"><SlidersHorizontal size={15} /></button>
-              <button title="More"><MoreHorizontal size={17} /></button>
-            </div>
-          </div>
-
           <div className="chart-wrap">
-            <div className="chart-watermark"><span>CM</span><strong>CHARTMASTERS</strong><small>MARKET ANALYSIS</small></div>
+            <div className="chart-watermark">
+              <strong>{selected.name} / TetherUS</strong>
+              <small>{symbol}, {timeframe}</small>
+            </div>
             <MarketChart
               key={symbol + ":" + timeframe}
               symbol={symbol}
@@ -356,7 +321,49 @@ export default function TradingTerminal() {
               hasMoreOlder={hasMoreOlder}
               olderError={olderError}
             />
-            <div className="chart-disclaimer">{statusLabel}{error ? " · " + error : ""}</div>
+            <div className="tv-legend">
+              <div className="tv-legend-row tv-legend-main">
+                <span className="tv-legend-name">{selected.name} / TetherUS</span>
+                <span className="tv-sep">·</span><span>{timeframe}</span>
+                <span className="tv-sep">·</span><span>Binance</span>
+                <span className={"tv-live" + (status === "live" ? " on" : "")} title={statusLabel} />
+              </div>
+              <div className={"tv-legend-row tv-ohlc" + (latestCandle ? (latestCandle.close >= latestCandle.open ? " up" : " down") : "")}>
+                <span>O<b>{formatPrice(latestCandle?.open)}</b></span>
+                <span>H<b>{formatPrice(latestCandle?.high)}</b></span>
+                <span>L<b>{formatPrice(latestCandle?.low)}</b></span>
+                <span>C<b>{formatPrice(latestCandle?.close)}</b></span>
+                {latestCandle && (
+                  <b>
+                    {formatChange(((latestCandle.close - latestCandle.open) / latestCandle.open) * 100).replace("%", "")}
+                    {" "}({formatPrice(latestCandle.close - latestCandle.open)})
+                  </b>
+                )}
+              </div>
+              <div className="tv-studies">
+                {enabledEma.map((period) => (
+                  <span className={"indicator-chip ema-chip-" + period} key={period}>EMA {period}</span>
+                ))}
+                {activeOscillator === "rsi" && <span className="indicator-chip rsi-chip">RSI 14</span>}
+                {activeOscillator === "macd" && <span className="indicator-chip macd-chip">MACD 12 26 9</span>}
+                {pineResult && pineResult.errors.length === 0 && (
+                  <span className="indicator-chip pine-chip">
+                    <span className="pine-chip-dots" aria-hidden>
+                      {pineResult.plots.slice(0, 4).map((plot, index) => (
+                        <i key={index} style={{ background: plot.color }} />
+                      ))}
+                    </span>
+                    {pineResult.title}
+                  </span>
+                )}
+                {pineResult && pineResult.errors.length > 0 && (
+                  <span className="indicator-chip pine-chip error">Pine error</span>
+                )}
+              </div>
+            </div>
+            {(status === "error" || error) && (
+              <div className="chart-disclaimer">{statusLabel}{error ? " · " + error : ""}</div>
+            )}
           </div>
 
           <div className="chart-rangebar">
@@ -364,37 +371,10 @@ export default function TradingTerminal() {
               {["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "5Y", "All"].map((range) => (
                 <button key={range} className={range === "All" ? "selected" : ""}>{range}</button>
               ))}
-              <button className="range-calendar" title="Go to date"><Clock3 size={13} /></button>
+              <button className="range-calendar" title="Go to date"><CalendarIcon size={20} /></button>
             </div>
             <div className="range-controls">
               <span>UTC</span><button>%</button><button>log</button><button className="selected">auto</button>
-            </div>
-          </div>
-
-          <div className="indicator-strip">
-            <div className="indicator-label">STUDIES</div>
-            <div className="active-indicators">
-              {enabledEma.map((period) => (
-                <span className={"indicator-chip ema-chip-" + period} key={period}>EMA {period}</span>
-              ))}
-              {activeOscillator === "rsi" && <span className="indicator-chip rsi-chip">RSI 14</span>}
-              {activeOscillator === "macd" && <span className="indicator-chip macd-chip">MACD 12 / 26 / 9</span>}
-              {pineResult && pineResult.errors.length === 0 && (
-                <span className="indicator-chip pine-chip">
-                  <span className="pine-chip-dots" aria-hidden>
-                    {pineResult.plots.slice(0, 4).map((plot, index) => (
-                      <i key={index} style={{ background: plot.color }} />
-                    ))}
-                  </span>
-                  {pineResult.title}
-                </span>
-              )}
-              {pineResult && pineResult.errors.length > 0 && (
-                <span className="indicator-chip pine-chip error">Pine error</span>
-              )}
-              {enabledEma.length === 0 && activeOscillator === "none" && !pineResult && (
-                <span className="muted">No indicators</span>
-              )}
             </div>
           </div>
 
@@ -416,21 +396,21 @@ export default function TradingTerminal() {
         </section>
 
         <aside className="right-toolbar" aria-label="Workspace tools">
-          <button className="right-tool active" title="Watchlist"><Star size={17} /></button>
-          <button className="right-tool" title="Alerts"><Bell size={17} /></button>
-          <button className="right-tool" title="Object tree"><Bookmark size={17} /></button>
-          <button className="right-tool" title="Screeners"><Grid2X2 size={17} /></button>
-          <button className="right-tool" title="Calendar"><Clock3 size={17} /></button>
+          <button className="right-tool active" title="Watchlist"><WatchlistIcon size={28} /></button>
+          <button className="right-tool" title="Alerts"><AlertIcon size={28} /></button>
+          <button className="right-tool" title="Object tree"><ObjectTreeIcon size={28} /></button>
+          <button className="right-tool" title="Screeners"><GridIcon size={28} /></button>
+          <button className="right-tool" title="Calendar"><CalendarIcon size={28} /></button>
           <div className="right-tool-separator" />
-          <button className="right-tool" title="Indicators"><Activity size={17} /></button>
-          <button className="right-tool" title="Help"><CircleHelp size={17} /></button>
+          <button className="right-tool" title="Indicators"><IndicatorsIcon size={28} /></button>
+          <button className="right-tool" title="Help"><HelpIcon size={28} /></button>
           <div className="right-tool-spacer" />
-          <button className="right-tool" title="Settings"><Settings2 size={17} /></button>
+          <button className="right-tool" title="Settings"><SettingsIcon size={28} /></button>
         </aside>
 
         {watchlistOpen && (
           <aside className="watchlist-panel">
-            <div className="watchlist-header"><strong>Watchlist <ChevronDown size={13} /></strong><div><button title="Add symbol"><Plus size={16} /></button><button title="More"><MoreHorizontal size={17} /></button><button title="Close watchlist" onClick={() => setWatchlistOpen(false)}><X size={15} /></button></div></div>
+            <div className="watchlist-header"><strong>Watchlist <ChevronDownIcon size={20} /></strong><div><button title="Add symbol"><PlusIcon size={24} /></button><button title="More"><MoreIcon size={24} /></button><button title="Close watchlist" onClick={() => setWatchlistOpen(false)}><CloseIcon size={24} /></button></div></div>
             <div className="watchlist-tabs"><button className="selected">Watchlist</button><button>Details</button><button>News</button></div>
             <div className="watchlist-group-label"><span>▾</span> CRYPTO <small>· USDT</small></div>
             <div className="watchlist-columns"><span>Symbol</span><span>Last price</span><span>Chg%</span></div>
@@ -450,7 +430,7 @@ export default function TradingTerminal() {
               })}
             </div>
             <div className="instrument-card">
-              <div className="instrument-card-title"><span>{selected.symbol}</span><button><MoreHorizontal size={16} /></button></div>
+              <div className="instrument-card-title"><span>{selected.symbol}</span><button><MoreIcon size={24} /></button></div>
               <div className="instrument-card-price">{formatPrice(lastPrice)}</div>
               <div className={changeClass(selectedTicker?.priceChangePercent)}>
                 {formatChange(selectedTicker?.priceChangePercent)} <span className="muted">24h</span>
@@ -465,7 +445,7 @@ export default function TradingTerminal() {
             <div className="watchlist-footer"><span className={tickerError ? "connection-dot warning" : "connection-dot"} /> Binance Spot · 24h stats refresh every 15s</div>
           </aside>
         )}
-        {!watchlistOpen && <button className="show-watchlist" onClick={() => setWatchlistOpen(true)} title="Show watchlist"><ChevronLeft size={16} /></button>}
+        {!watchlistOpen && <button className="show-watchlist" onClick={() => setWatchlistOpen(true)} title="Show watchlist"><ChevronLeftIcon size={24} /></button>}
       </div>
 
       <footer className="statusbar">
@@ -473,7 +453,7 @@ export default function TradingTerminal() {
           <span><span className={status === "live" ? "connection-dot live" : "connection-dot"} /> {statusLabel}</span>
           <span>ChartMasters Terminal</span>
         </div>
-        <div className="status-right"><button><CircleHelp size={14} /> Help</button><span>© ChartMasters</span></div>
+        <div className="status-right"><button><HelpIcon size={20} /> Help</button><span>© ChartMasters</span></div>
       </footer>
     </main>
   );
