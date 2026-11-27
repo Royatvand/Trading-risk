@@ -114,7 +114,7 @@ export async function fetch24hTickers(
   const params = new URLSearchParams({
     symbols: JSON.stringify(symbols.map((symbol) => symbol.toUpperCase())),
   });
-  const response = await fetch(REST_BASE_URL + "/api/v3/ticker/24hr?" + params.toString(), {
+  const response = await fetch(REST_BASE_URLS[0] + "/api/v3/ticker/24hr?" + params.toString(), {
     method: "GET",
     signal,
     cache: "no-store",
