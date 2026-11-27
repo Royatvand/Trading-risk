@@ -632,12 +632,12 @@ export default function MarketChart({
     }
   }, [drawings, storageKey, storageReadyKey]);
 
-  const coordinateFor = (point: DrawingPoint) => {
+  const coordinateFor = (point: DrawingPoint): { x: number; y: number } | null => {
     const chart=chartRef.current, series=candleSeriesRef.current;
     if(!chart||!series)return null;
     const x=chart.timeScale().timeToCoordinate(point.time as UTCTimestamp), y=series.priceToCoordinate(point.price);
     if(x===null||y===null)return null;
-    return {x,y};
+    return {x:Number(x),y:Number(y)};
   };
 
   const pointFromPointer = (event: React.PointerEvent<SVGSVGElement>): DrawingPoint | null => {
