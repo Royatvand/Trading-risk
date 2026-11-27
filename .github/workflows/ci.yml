@@ -4,7 +4,7 @@ run-name: Validate ChartMasters Terminal
 on:
   push:
     branches:
-      - feat/chartmasters-tradingview-ui
+      - 'feat/**'
   pull_request:
     branches:
       - main
