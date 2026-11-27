@@ -11,6 +11,7 @@ import MarketChart from "./MarketChart";
 import { useBinanceMarket } from "@/features/market-data/useBinanceMarket";
 import { useBinanceWatchlist } from "@/features/market-data/useBinanceWatchlist";
 import type { ChartInterval, Ticker24h } from "@/features/market-data/types";
+import type { EmaPeriod, OscillatorType } from "@/features/indicators/calculations";
 
 type DrawingTool = "cursor" | "crosshair" | "trend" | "rectangle" | "fibonacci";
 
@@ -77,6 +78,16 @@ export default function TradingTerminal() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [favorite, setFavorite] = useState(true);
+  const [indicatorMenuOpen, setIndicatorMenuOpen] = useState(false);
+  const [enabledEma, setEnabledEma] = useState<EmaPeriod[]>([]);
+  const [activeOscillator, setActiveOscillator] = useState<OscillatorType>("none");
+
+  const toggleEma = (period: EmaPeriod, enabled: boolean) => {
+    setEnabledEma((current) => enabled
+      ? [...current, period].sort((a, b) => a - b)
+      : current.filter((item) => item !== period)
+    );
+  };
 
   const {
     candles,
@@ -162,7 +173,52 @@ export default function TradingTerminal() {
         </div>
         <div className="toolbar-divider" />
         <button className="toolbar-icon" title="Chart type"><CandlestickChart size={17} /></button>
-        <button className="toolbar-action"><Plus size={15} /> Indicators</button>
+        <div className="indicator-menu-control">
+          <button
+            className={"toolbar-action" + (indicatorMenuOpen ? " active" : "")}
+            aria-expanded={indicatorMenuOpen}
+            onClick={() => setIndicatorMenuOpen((open) => !open)}
+          >
+            <Plus size={15} /> Indicators
+          </button>
+          {indicatorMenuOpen && (
+            <div className="indicator-popover" role="dialog" aria-label="Chart indicators">
+              <div className="indicator-menu-title">Moving averages</div>
+              {([20, 50, 200] as const).map((period) => (
+                <label className="indicator-choice" key={period}>
+                  <input
+                    type="checkbox"
+                    checked={enabledEma.includes(period)}
+                    onChange={(event) => toggleEma(period, event.target.checked)}
+                  />
+                  <span className={"indicator-color ema-" + period} />
+                  <span>EMA {period}</span>
+                </label>
+              ))}
+              <div className="indicator-menu-divider" />
+              <div className="indicator-menu-title">Oscillator · one pane</div>
+              {([
+                ["none", "Off"],
+                ["rsi", "RSI · 14"],
+                ["macd", "MACD · 12 / 26 / 9"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  className={"indicator-choice indicator-radio" + (activeOscillator === value ? " selected" : "")}
+                  role="radio"
+                  aria-checked={activeOscillator === value}
+                  onClick={() => setActiveOscillator(value)}
+                >
+                  <span className="indicator-radio-mark" />
+                  <span>{label}</span>
+                </button>
+              ))}
+              <div className="indicator-menu-footer">
+                Changes apply to the current chart only
+              </div>
+            </div>
+          )}
+        </div>
         <button className="toolbar-icon optional" title="Alert"><Bell size={16} /></button>
         <button className="toolbar-action optional"><Clock3 size={15} /> Replay</button>
         <div className="toolbar-spacer" />
@@ -229,7 +285,7 @@ export default function TradingTerminal() {
             </div>
             <div className="chart-status-actions">
               <button title="Compare"><ArrowLeftRight size={15} /></button>
-              <button title="Indicators"><Activity size={15} /></button>
+              <button title="Indicators" onClick={() => setIndicatorMenuOpen((open) => !open)}><Activity size={15} /></button>
               <button title="Settings"><SlidersHorizontal size={15} /></button>
               <button title="More"><MoreHorizontal size={17} /></button>
             </div>
@@ -245,6 +301,8 @@ export default function TradingTerminal() {
               status={status}
               error={error}
               activeTool={activeTool}
+              enabledEma={enabledEma}
+              activeOscillator={activeOscillator}
               drawingsVisible={drawingsVisible}
               clearDrawingsSignal={clearDrawingsSignal}
               onLoadOlder={loadOlderCandles}
@@ -256,8 +314,17 @@ export default function TradingTerminal() {
           </div>
 
           <div className="indicator-strip">
-            <div className="indicator-label">INDICATORS <span>Indicator calculations are the next milestone</span></div>
-            <div className="indicator-placeholder"><span>INDICATOR PANE</span></div>
+            <div className="indicator-label">ACTIVE INDICATORS</div>
+            <div className="active-indicators">
+              {enabledEma.map((period) => (
+                <span className={"indicator-chip ema-chip-" + period} key={period}>EMA {period}</span>
+              ))}
+              {activeOscillator === "rsi" && <span className="indicator-chip rsi-chip">RSI 14</span>}
+              {activeOscillator === "macd" && <span className="indicator-chip macd-chip">MACD 12 / 26 / 9</span>}
+              {enabledEma.length === 0 && activeOscillator === "none" && (
+                <span className="muted">No indicators selected</span>
+              )}
+            </div>
           </div>
 
           <div className="bottom-tabs">

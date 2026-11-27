@@ -11,15 +11,17 @@ This branch replaces the previous MT5/MQL5 prototype with a web application foun
 - Lightweight Charts candlestick chart
 - Demo/mock OHLCV data only
 - Symbol and timeframe selection
-- Watchlist and drawing toolbar UI
+- Binance Spot REST history and live WebSocket candles
+- Paginated older candle history
+- Persistent trend line, rectangle and Fibonacci drawings
+- EMA 20 / 50 / 200, RSI 14 and MACD 12 / 26 / 9 indicators
+- Watchlist and drawing toolbar
 
 ## Not connected yet
 
-- Binance REST API
-- Binance WebSocket streams
-- Persistent user workspaces
+- Persistent cloud workspaces and cross-device drawing sync
 - Authentication and subscriptions
-- Functional drawing overlays and indicator calculations
+- Alert delivery and strategy testing
 
 ## Getting started
 
@@ -32,7 +34,7 @@ Open http://localhost:3000.
 
 ## Next milestone
 
-Connect Binance Spot market data through a provider adapter, load historical klines, then subscribe to WebSocket kline updates. Keep provider code separate from chart rendering so additional market-data providers can be added later.
+Expand the technical analysis toolkit with configurable studies, then add chart alerts and synchronized user workspaces. Keep market-data providers separate from chart rendering so additional exchanges can be added later.
 
 ## Licensing note
 

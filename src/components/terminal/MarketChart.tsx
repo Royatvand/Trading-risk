@@ -6,11 +6,19 @@ import {
   ColorType,
   createChart,
   HistogramSeries,
+  LineSeries,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { MarketCandle } from "@/features/market-data/types";
+import {
+  calculateEMA,
+  calculateMACD,
+  calculateRSI,
+  type EmaPeriod,
+  type OscillatorType,
+} from "@/features/indicators/calculations";
 
 type DrawingTool = "cursor" | "crosshair" | "trend" | "rectangle" | "fibonacci";
 type SavedDrawingTool = Exclude<DrawingTool, "cursor" | "crosshair">;
@@ -34,6 +42,8 @@ type Props = {
   isLoadingOlder: boolean;
   hasMoreOlder: boolean;
   olderError: string | null;
+  enabledEma: EmaPeriod[];
+  activeOscillator: OscillatorType;
 };
 
 const fibLevels = [
@@ -59,11 +69,16 @@ export default function MarketChart({
   isLoadingOlder,
   hasMoreOlder,
   olderError,
+  enabledEma,
+  activeOscillator,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const emaSeriesRef = useRef<Partial<Record<EmaPeriod, ISeriesApi<"Line">>>>({});
+  const oscillatorLineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
+  const oscillatorHistogramSeriesRef = useRef<ISeriesApi<"Histogram">[]>([]);
   const seededRef = useRef(false);
   const firstCandleTimeRef = useRef<number | null>(null);
   const onLoadOlderRef = useRef(onLoadOlder);
@@ -264,6 +279,172 @@ export default function MarketChart({
       color: latest.close >= latest.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
     });
   }, [candles, toChartTime]);
+
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const periods: EmaPeriod[] = [20, 50, 200];
+    const colors: Record<EmaPeriod, string> = {
+      20: "#f4c15d",
+      50: "#4da3ff",
+      200: "#b48bf4",
+    };
+
+    for (const period of periods) {
+      const existing = emaSeriesRef.current[period];
+      const enabled = enabledEma.includes(period);
+
+      if (!enabled) {
+        if (existing) {
+          chart.removeSeries(existing);
+          delete emaSeriesRef.current[period];
+        }
+        continue;
+      }
+
+      const series = existing ?? chart.addSeries(LineSeries, {
+        color: colors[period],
+        lineWidth: 2,
+        title: "EMA " + period,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+
+      emaSeriesRef.current[period] = series;
+      series.setData(calculateEMA(candles, period).map((point) => ({
+        time: toChartTime(point.time),
+        value: point.value,
+      })));
+    }
+  }, [candles, enabledEma, toChartTime]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    oscillatorLineSeriesRef.current.forEach((series) => chart.removeSeries(series));
+    oscillatorHistogramSeriesRef.current.forEach((series) => chart.removeSeries(series));
+    oscillatorLineSeriesRef.current = [];
+    oscillatorHistogramSeriesRef.current = [];
+
+    if (activeOscillator === "none") return;
+
+    if (activeOscillator === "rsi") {
+      const rsi = chart.addSeries(LineSeries, {
+        color: "#b48bf4",
+        lineWidth: 2,
+        title: "RSI 14",
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      }, 1);
+      const overbought = chart.addSeries(LineSeries, {
+        color: "rgba(246, 70, 93, 0.55)",
+        lineWidth: 1,
+        title: "70",
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      }, 1);
+      const oversold = chart.addSeries(LineSeries, {
+        color: "rgba(14, 203, 129, 0.55)",
+        lineWidth: 1,
+        title: "30",
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      }, 1);
+
+      oscillatorLineSeriesRef.current = [rsi, overbought, oversold];
+      chart.panes()[1]?.setHeight(120);
+      return;
+    }
+
+    const macd = chart.addSeries(LineSeries, {
+      color: "#4da3ff",
+      lineWidth: 2,
+      title: "MACD",
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    }, 1);
+    const signal = chart.addSeries(LineSeries, {
+      color: "#f4c15d",
+      lineWidth: 2,
+      title: "Signal",
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    }, 1);
+    const zero = chart.addSeries(LineSeries, {
+      color: "rgba(132, 142, 156, 0.45)",
+      lineWidth: 1,
+      title: "Zero",
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    }, 1);
+    const histogram = chart.addSeries(HistogramSeries, {
+      priceLineVisible: false,
+      lastValueVisible: false,
+    }, 1);
+
+    oscillatorLineSeriesRef.current = [macd, signal, zero];
+    oscillatorHistogramSeriesRef.current = [histogram];
+    chart.panes()[1]?.setHeight(140);
+  }, [activeOscillator]);
+
+  useEffect(() => {
+    if (activeOscillator === "none") return;
+
+    if (activeOscillator === "rsi") {
+      const [rsi, overbought, oversold] = oscillatorLineSeriesRef.current;
+      if (!rsi || !overbought || !oversold) return;
+
+      const rsiData = calculateRSI(candles);
+      rsi.setData(rsiData.map((point) => ({
+        time: toChartTime(point.time),
+        value: point.value,
+      })));
+      const upperData = candles.map((candle) => ({
+        time: toChartTime(candle.openTime),
+        value: 70,
+      }));
+      const lowerData = candles.map((candle) => ({
+        time: toChartTime(candle.openTime),
+        value: 30,
+      }));
+      overbought.setData(upperData);
+      oversold.setData(lowerData);
+      return;
+    }
+
+    const [macd, signal, zero] = oscillatorLineSeriesRef.current;
+    const [histogram] = oscillatorHistogramSeriesRef.current;
+    if (!macd || !signal || !zero || !histogram) return;
+
+    const values = calculateMACD(candles);
+    macd.setData(values.macd.map((point) => ({
+      time: toChartTime(point.time),
+      value: point.value,
+    })));
+    signal.setData(values.signal.map((point) => ({
+      time: toChartTime(point.time),
+      value: point.value,
+    })));
+    zero.setData(values.histogram.map((point) => ({
+      time: toChartTime(point.time),
+      value: 0,
+    })));
+    histogram.setData(values.histogram.map((point) => ({
+      time: toChartTime(point.time),
+      value: point.value,
+      color: point.value >= 0 ? "rgba(14, 203, 129, 0.52)" : "rgba(246, 70, 93, 0.52)",
+    })));
+  }, [candles, activeOscillator, toChartTime]);
 
   useEffect(() => {
     setDraftPoint(null);
