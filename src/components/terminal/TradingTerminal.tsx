@@ -127,11 +127,12 @@ export default function TradingTerminal() {
           <span className="brand-divider" />
           <span className="product-label">TERMINAL</span>
         </div>
-        <nav className="main-menu">
-          {["File", "View", "Insert", "Charts", "Trading", "Help"].map((item) => (
-            <button key={item} className="menu-item">{item}</button>
-          ))}
-        </nav>
+        <div className="topbar-context">
+          <span className="context-dot" />
+          <span>SPOT WORKSPACE</span>
+          <span className="context-divider">/</span>
+          <span className="context-muted">BINANCE</span>
+        </div>
         <div className="topbar-actions">
           <button className="icon-action" title="Search"><Search size={17} /></button>
           <button className="icon-action" title="Alerts"><Bell size={17} /></button>
@@ -313,8 +314,20 @@ export default function TradingTerminal() {
             <div className="chart-disclaimer">{statusLabel}{error ? " · " + error : ""}</div>
           </div>
 
+          <div className="chart-rangebar">
+            <div className="range-presets">
+              {["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "5Y", "All"].map((range) => (
+                <button key={range} className={range === "All" ? "selected" : ""}>{range}</button>
+              ))}
+              <button className="range-calendar" title="Go to date"><Clock3 size={13} /></button>
+            </div>
+            <div className="range-controls">
+              <span>UTC</span><button>%</button><button>log</button><button className="selected">auto</button>
+            </div>
+          </div>
+
           <div className="indicator-strip">
-            <div className="indicator-label">ACTIVE INDICATORS</div>
+            <div className="indicator-label">STUDIES</div>
             <div className="active-indicators">
               {enabledEma.map((period) => (
                 <span className={"indicator-chip ema-chip-" + period} key={period}>EMA {period}</span>
@@ -322,21 +335,33 @@ export default function TradingTerminal() {
               {activeOscillator === "rsi" && <span className="indicator-chip rsi-chip">RSI 14</span>}
               {activeOscillator === "macd" && <span className="indicator-chip macd-chip">MACD 12 / 26 / 9</span>}
               {enabledEma.length === 0 && activeOscillator === "none" && (
-                <span className="muted">No indicators selected</span>
+                <span className="muted">No indicators</span>
               )}
             </div>
           </div>
 
           <div className="bottom-tabs">
-            {["Trading Panel", "Strategy Tester", "Replay"].map((tab) => <button key={tab} className={activeTab === tab ? "bottom-tab active" : "bottom-tab"} onClick={() => setActiveTab(tab)}>{tab}</button>)}
-            <div className="bottom-tab-spacer" />
-            <button className="bottom-icon" title="Collapse panel"><ChevronDown size={15} /></button>
-          </div>
+            {["Pine Editor", "Strategy Tester", "Trading Panel"].map((tab) => <button key={tab} className={activeTab === tab ? "bottom-tab active" : "bottom-tab"} onClick={() => setActiveTab(tab)}>{tab}</button>}
         </section>
+
+        <aside className="right-toolbar" aria-label="Workspace tools">
+          <button className="right-tool active" title="Watchlist"><Star size={17} /></button>
+          <button className="right-tool" title="Alerts"><Bell size={17} /></button>
+          <button className="right-tool" title="Object tree"><Bookmark size={17} /></button>
+          <button className="right-tool" title="Screeners"><Grid2X2 size={17} /></button>
+          <button className="right-tool" title="Calendar"><Clock3 size={17} /></button>
+          <div className="right-tool-separator" />
+          <button className="right-tool" title="Indicators"><Activity size={17} /></button>
+          <button className="right-tool" title="Help"><CircleHelp size={17} /></button>
+          <div className="right-tool-spacer" />
+          <button className="right-tool" title="Settings"><Settings2 size={17} /></button>
+        </aside>
 
         {watchlistOpen && (
           <aside className="watchlist-panel">
-            <div className="watchlist-header"><strong>Watchlist</strong><div><button title="Add symbol"><Plus size={16} /></button><button title="More"><MoreHorizontal size={17} /></button><button title="Close watchlist" onClick={() => setWatchlistOpen(false)}><X size={15} /></button></div></div>
+            <div className="watchlist-header"><strong>Watchlist <ChevronDown size={13} /></strong><div><button title="Add symbol"><Plus size={16} /></button><button title="More"><MoreHorizontal size={17} /></button><button title="Close watchlist" onClick={() => setWatchlistOpen(false)}><X size={15} /></button></div></div>
+            <div className="watchlist-tabs"><button className="selected">Watchlist</button><button>Details</button><button>News</button></div>
+            <div className="watchlist-group-label"><span>▾</span> CRYPTO <small>· USDT</small></div>
             <div className="watchlist-columns"><span>Symbol</span><span>Last price</span><span>Chg%</span></div>
             <div className="watchlist-items">
               {symbols.map((item) => {
