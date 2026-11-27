@@ -112,9 +112,11 @@ export default function MarketChart({
     const container = containerRef.current;
     if (!container) return;
 
+    const initialWidth = Math.max(1, Math.floor(container.getBoundingClientRect().width));
+    const initialHeight = Math.max(1, Math.floor(container.getBoundingClientRect().height));
     const chart = createChart(container, {
-      width: container.clientWidth,
-      height: container.clientHeight,
+      width: initialWidth,
+      height: initialHeight,
       layout: {
         background: { type: ColorType.Solid, color: "#131722" },
         textColor: "#787b86",
@@ -177,12 +179,23 @@ export default function MarketChart({
 
       const width = Math.floor(entry.contentRect.width);
       const height = Math.floor(entry.contentRect.height);
+      if (width < 2 || height < 2) return;
       chart.applyOptions({ width, height });
       setChartSize({ width, height });
       setViewportRevision((current) => current + 1);
     });
     resizeObserver.observe(container);
-    setChartSize({ width: container.clientWidth, height: container.clientHeight });
+    const initialRect = container.getBoundingClientRect();
+    if (initialRect.width > 1 && initialRect.height > 1) {
+      chart.applyOptions({
+        width: Math.floor(initialRect.width),
+        height: Math.floor(initialRect.height),
+      });
+      setChartSize({
+        width: Math.floor(initialRect.width),
+        height: Math.floor(initialRect.height),
+      });
+    }
 
     const handleVisibleRange = () => {
       setViewportRevision((current) => current + 1);
