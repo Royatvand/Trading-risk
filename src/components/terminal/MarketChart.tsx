@@ -7,6 +7,7 @@ import {
   createChart,
   HistogramSeries,
   LineSeries,
+  LineStyle,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
@@ -19,6 +20,7 @@ import {
   type EmaPeriod,
   type OscillatorType,
 } from "@/features/indicators/calculations";
+import type { PineResult } from "@/features/pine";
 
 type DrawingTool = "cursor" | "crosshair" | "trend" | "rectangle" | "fibonacci";
 type SavedDrawingTool = Exclude<DrawingTool, "cursor" | "crosshair">;
@@ -44,6 +46,7 @@ type Props = {
   olderError: string | null;
   enabledEma: EmaPeriod[];
   activeOscillator: OscillatorType;
+  pineResult?: PineResult | null;
 };
 
 const fibLevels = [
@@ -71,6 +74,7 @@ export default function MarketChart({
   olderError,
   enabledEma,
   activeOscillator,
+  pineResult = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -79,6 +83,7 @@ export default function MarketChart({
   const emaSeriesRef = useRef<Partial<Record<EmaPeriod, ISeriesApi<"Line">>>>({});
   const oscillatorLineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
   const oscillatorHistogramSeriesRef = useRef<ISeriesApi<"Histogram">[]>([]);
+  const pineSeriesRef = useRef<ISeriesApi<"Line" | "Histogram">[]>([]);
   const seededRef = useRef(false);
   const firstCandleTimeRef = useRef<number | null>(null);
   const onLoadOlderRef = useRef(onLoadOlder);
@@ -446,6 +451,106 @@ export default function MarketChart({
     })));
   }, [candles, activeOscillator, toChartTime]);
 
+
+  // Pine Script output. Recreate series only when the script's plot layout changes.
+  const pineLayout = pineResult && pineResult.errors.length === 0
+    ? JSON.stringify({
+        overlay: pineResult.overlay,
+        plots: pineResult.plots.map((plot) => [plot.title, plot.color, plot.lineWidth, plot.style]),
+        hlines: pineResult.hlines.map((hline) => [hline.title, hline.color, hline.lineWidth, hline.lineStyle]),
+      })
+    : null;
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || !pineLayout) return;
+    const layout = JSON.parse(pineLayout) as {
+      overlay: boolean;
+      plots: [string, string, number, string][];
+      hlines: [string, string, number, string][];
+    };
+    if (layout.plots.length === 0 && layout.hlines.length === 0) return;
+
+    const paneIndex = layout.overlay ? 0 : activeOscillator === "none" ? 1 : 2;
+    const created: ISeriesApi<"Line" | "Histogram">[] = [];
+    const baseOptions = {
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    };
+
+    for (const [title, color, lineWidth, style] of layout.plots) {
+      if (style === "histogram") {
+        created.push(chart.addSeries(HistogramSeries, {
+          color,
+          title,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        }, paneIndex));
+      } else {
+        created.push(chart.addSeries(LineSeries, {
+          ...baseOptions,
+          color,
+          lineWidth: lineWidth as 1 | 2 | 3 | 4,
+          title,
+          ...(style === "circles" ? { lineVisible: false, pointMarkersVisible: true } : {}),
+        }, paneIndex));
+      }
+    }
+
+    for (const [title, color, lineWidth, lineStyle] of layout.hlines) {
+      created.push(chart.addSeries(LineSeries, {
+        ...baseOptions,
+        color,
+        lineWidth: lineWidth as 1 | 2 | 3 | 4,
+        lineStyle: lineStyle === "solid" ? LineStyle.Solid
+          : lineStyle === "dotted" ? LineStyle.Dotted : LineStyle.Dashed,
+        title,
+      }, paneIndex));
+    }
+
+    pineSeriesRef.current = created;
+    if (!layout.overlay) chart.panes()[paneIndex]?.setHeight(150);
+
+    return () => {
+      pineSeriesRef.current = [];
+      const currentChart = chartRef.current;
+      if (!currentChart) return;
+      for (const series of created) {
+        try {
+          currentChart.removeSeries(series);
+        } catch {
+          // The series may already be removed when the chart is recreated.
+        }
+      }
+    };
+  }, [pineLayout, activeOscillator]);
+
+  useEffect(() => {
+    const created = pineSeriesRef.current;
+    if (!pineResult || pineResult.errors.length > 0 || created.length === 0) return;
+
+    pineResult.plots.forEach((plot, index) => {
+      const series = created[index];
+      if (!series) return;
+      series.setData(plot.points.map((point) =>
+        point.value === undefined
+          ? { time: point.time as UTCTimestamp }
+          : {
+              time: point.time as UTCTimestamp,
+              value: point.value,
+              ...(point.color ? { color: point.color } : {}),
+            }
+      ) as never);
+    });
+
+    const times = candles.map((candle) => toChartTime(candle.openTime));
+    pineResult.hlines.forEach((hline, index) => {
+      const series = created[pineResult.plots.length + index];
+      if (!series) return;
+      series.setData(times.map((time) => ({ time, value: hline.price })) as never);
+    });
+  }, [pineResult, pineLayout, activeOscillator, candles, toChartTime]);
   useEffect(() => {
     setDraftPoint(null);
     setPointerPosition(null);
