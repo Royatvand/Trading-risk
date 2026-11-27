@@ -345,18 +345,7 @@ export default function TradingTerminal() {
           </div>
         </section>
 
-        <aside className="right-toolbar" aria-label="Workspace tools">
-          <button className="right-tool active" title="Watchlist"><Star size={17} /></button>
-          <button className="right-tool" title="Alerts"><Bell size={17} /></button>
-          <button className="right-tool" title="Object tree"><Bookmark size={17} /></button>
-          <button className="right-tool" title="Screeners"><Grid2X2 size={17} /></button>
-          <button className="right-tool" title="Calendar"><Clock3 size={17} /></button>
-          <div className="right-tool-separator" />
-          <button className="right-tool" title="Indicators"><Activity size={17} /></button>
-          <button className="right-tool" title="Help"><CircleHelp size={17} /></button>
-          <div className="right-tool-spacer" />
-          <button className="right-tool" title="Settings"><Settings2 size={17} /></button>
-        </aside>
+
 
         {watchlistOpen && (
           <aside className="watchlist-panel">
@@ -396,6 +385,18 @@ export default function TradingTerminal() {
           </aside>
         )}
         {!watchlistOpen && <button className="show-watchlist" onClick={() => setWatchlistOpen(true)} title="Show watchlist"><ChevronLeft size={16} /></button>}
+        <aside className="right-toolbar" aria-label="Workspace tools">
+          <button className="right-tool active" title="Watchlist"><Star size={17} /></button>
+          <button className="right-tool" title="Alerts"><Bell size={17} /></button>
+          <button className="right-tool" title="Object tree"><Bookmark size={17} /></button>
+          <button className="right-tool" title="Screeners"><Grid2X2 size={17} /></button>
+          <button className="right-tool" title="Calendar"><Clock3 size={17} /></button>
+          <div className="right-tool-separator" />
+          <button className="right-tool" title="Indicators"><Activity size={17} /></button>
+          <button className="right-tool" title="Help"><CircleHelp size={17} /></button>
+          <div className="right-tool-spacer" />
+          <button className="right-tool" title="Settings"><Settings2 size={17} /></button>
+        </aside>
       </div>
 
       <footer className="statusbar">

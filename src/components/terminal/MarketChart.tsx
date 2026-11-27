@@ -111,25 +111,25 @@ export default function MarketChart({
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: "#0b0e11" },
-        textColor: "#848e9c",
+        background: { type: ColorType.Solid, color: "#131722" },
+        textColor: "#787b86",
         fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "#1b2028" },
-        horzLines: { color: "#1b2028" },
+        vertLines: { color: "#1e222d" },
+        horzLines: { color: "#1e222d" },
       },
       crosshair: {
-        vertLine: { color: "#758696", width: 1, style: 3, labelBackgroundColor: "#303843" },
-        horzLine: { color: "#758696", width: 1, style: 3, labelBackgroundColor: "#303843" },
+        vertLine: { color: "#787b86", width: 1, style: 3, labelBackgroundColor: "#2a2e39" },
+        horzLine: { color: "#787b86", width: 1, style: 3, labelBackgroundColor: "#2a2e39" },
       },
       rightPriceScale: {
-        borderColor: "#252b34",
+        borderColor: "#2a2e39",
         scaleMargins: { top: 0.08, bottom: 0.2 },
       },
       timeScale: {
-        borderColor: "#252b34",
+        borderColor: "#2a2e39",
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 8,
@@ -141,12 +141,12 @@ export default function MarketChart({
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#0ecb81",
-      downColor: "#f6465d",
-      borderUpColor: "#0ecb81",
-      borderDownColor: "#f6465d",
-      wickUpColor: "#0ecb81",
-      wickDownColor: "#f6465d",
+      upColor: "#089981",
+      downColor: "#f23645",
+      borderUpColor: "#089981",
+      borderDownColor: "#f23645",
+      wickUpColor: "#089981",
+      wickDownColor: "#f23645",
       priceLineVisible: true,
       lastValueVisible: true,
     });
@@ -228,7 +228,7 @@ export default function MarketChart({
       volumeSeries.setData(candles.map((candle) => ({
         time: toChartTime(candle.openTime),
         value: candle.volume,
-        color: candle.close >= candle.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+        color: candle.close >= candle.open ? "rgba(8, 153, 129, 0.30)" : "rgba(242, 54, 69, 0.30)",
       })));
       chart.timeScale().fitContent();
       firstCandleTimeRef.current = firstTime;
@@ -252,7 +252,7 @@ export default function MarketChart({
       volumeSeries.setData(candles.map((candle) => ({
         time: toChartTime(candle.openTime),
         value: candle.volume,
-        color: candle.close >= candle.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+        color: candle.close >= candle.open ? "rgba(8, 153, 129, 0.30)" : "rgba(242, 54, 69, 0.30)",
       })));
       firstCandleTimeRef.current = firstTime;
 
@@ -276,7 +276,7 @@ export default function MarketChart({
     volumeSeries.update({
       time: toChartTime(latest.openTime),
       value: latest.volume,
-      color: latest.close >= latest.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+      color: latest.close >= latest.open ? "rgba(8, 153, 129, 0.30)" : "rgba(242, 54, 69, 0.30)",
     });
   }, [candles, toChartTime]);
 

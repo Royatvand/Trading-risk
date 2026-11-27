@@ -406,3 +406,52 @@ html, body { background: #131722; color: #d1d4dc; }
   .bottom-tabs { height:33px; flex-basis:33px; gap:10px; padding:0 8px; }
   .statusbar { height:20px; flex-basis:20px; }
 }
+
+
+/* Final layout pass: TradingView-style chart / watchlist / right rail order */
+.workspace { align-items: stretch; }
+.chart-column { min-width: 360px; }
+.watchlist-panel {
+  order: 3;
+  width: 310px;
+  flex: 0 0 310px;
+  border-left: 1px solid #2a2e39;
+  border-right: 0;
+}
+.right-toolbar {
+  order: 4;
+  width: 44px;
+  flex: 0 0 44px;
+  border-left: 1px solid #2a2e39;
+  border-right: 0;
+}
+.drawing-toolbar { order: 1; }
+.chart-column { order: 2; }
+.show-watchlist {
+  right: 44px;
+  border-radius: 5px 0 0 5px;
+}
+.chart-heading {
+  border-bottom: 1px solid #2a2e39;
+}
+.instrument-title { min-width: 170px; }
+.quote-summary { min-width: 110px; }
+.ohlc-summary { flex-wrap: wrap; justify-content: flex-end; }
+.chart-status-row { border-bottom: 1px solid #1e222d; }
+.watchlist-items { overflow-y: auto; min-height: 0; }
+.watchlist-panel { overflow: hidden; }
+.watchlist-header, .watchlist-tabs { flex-shrink: 0; }
+.watchlist-footer { margin-top: auto; }
+.right-tool { width: 35px; height: 35px; }
+.right-tool.active::before { left: -5px; }
+@media (max-width: 1100px) {
+  .watchlist-panel { width: 275px; flex-basis: 275px; }
+  .right-toolbar { width: 40px; flex-basis: 40px; }
+  .show-watchlist { right: 40px; }
+}
+@media (max-width: 760px) {
+  .chart-column { min-width: 240px; }
+  .watchlist-panel { width: min(310px, 82vw); flex-basis: min(310px, 82vw); }
+  .right-toolbar { width: 34px; flex-basis: 34px; }
+  .show-watchlist { right: 34px; }
+}
