@@ -1,7 +1,15 @@
 import type { ChartInterval, MarketCandle, Ticker24h } from "./types";
 
-const REST_BASE_URL = "https://data-api.binance.vision";
-const WS_BASE_URL = "wss://data-stream.binance.vision:443";
+const REST_BASE_URLS = [
+  "https://data-api.binance.vision",
+  "https://api.binance.com",
+  "https://api1.binance.com",
+];
+const WS_BASE_URLS = [
+  "wss://data-stream.binance.vision:443",
+  "wss://stream.binance.com:9443",
+  "wss://stream.binance.com:443",
+];
 
 const intervalMap: Record<ChartInterval, string> = {
   "1m": "1m", "5m": "5m", "15m": "15m", "30m": "30m",
@@ -27,9 +35,10 @@ export function toBinanceInterval(interval: ChartInterval): string {
   return intervalMap[interval];
 }
 
-export function createKlineStreamUrl(symbol: string, interval: ChartInterval): string {
+export function createKlineStreamUrl(symbol: string, interval: ChartInterval, hostIndex = 0): string {
   const stream = symbol.toLowerCase() + "@kline_" + toBinanceInterval(interval);
-  return WS_BASE_URL + "/ws/" + stream;
+  const baseUrl = WS_BASE_URLS[((hostIndex % WS_BASE_URLS.length) + WS_BASE_URLS.length) % WS_BASE_URLS.length];
+  return baseUrl + "/ws/" + stream;
 }
 
 export async function fetchKlines(
@@ -49,37 +58,53 @@ export async function fetchKlines(
     params.set("endTime", String(options.endTime));
   }
 
-  const response = await fetch(REST_BASE_URL + "/api/v3/klines?" + params.toString(), {
-    method: "GET",
-    signal,
-    cache: "no-store",
-    headers: { Accept: "application/json" },
-  });
+  let lastError: unknown = null;
 
-  if (!response.ok) {
-    throw new Error("Binance history request failed (" + response.status + ")");
+  for (const baseUrl of REST_BASE_URLS) {
+    try {
+      const response = await fetch(baseUrl + "/api/v3/klines?" + params.toString(), {
+        method: "GET",
+        signal,
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Binance history request failed (" + response.status + ")");
+      }
+
+      const rows = (await response.json()) as RawKline[];
+      if (!Array.isArray(rows) || rows.length === 0) {
+        throw new Error("No candle history returned by Binance");
+      }
+
+      const candles = rows.map((row) => ({
+        openTime: Number(row[0]),
+        open: Number(row[1]),
+        high: Number(row[2]),
+        low: Number(row[3]),
+        close: Number(row[4]),
+        volume: Number(row[5]),
+      })).filter((candle) =>
+        Number.isFinite(candle.openTime) &&
+        Number.isFinite(candle.open) &&
+        Number.isFinite(candle.high) &&
+        Number.isFinite(candle.low) &&
+        Number.isFinite(candle.close) &&
+        Number.isFinite(candle.volume)
+      );
+
+      if (candles.length > 0) return candles;
+      throw new Error("Binance returned no valid candles");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") throw error;
+      lastError = error;
+    }
   }
 
-  const rows = (await response.json()) as RawKline[];
-  if (!Array.isArray(rows)) {
-    throw new Error("Unexpected response from Binance klines endpoint");
-  }
-
-  return rows.map((row) => ({
-    openTime: Number(row[0]),
-    open: Number(row[1]),
-    high: Number(row[2]),
-    low: Number(row[3]),
-    close: Number(row[4]),
-    volume: Number(row[5]),
-  })).filter((candle) =>
-    Number.isFinite(candle.openTime) &&
-    Number.isFinite(candle.open) &&
-    Number.isFinite(candle.high) &&
-    Number.isFinite(candle.low) &&
-    Number.isFinite(candle.close) &&
-    Number.isFinite(candle.volume)
-  );
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Unable to load candle history from Binance endpoints");
 }
 
 export async function fetch24hTickers(
