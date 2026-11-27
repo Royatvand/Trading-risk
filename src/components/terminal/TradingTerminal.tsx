@@ -341,7 +341,7 @@ export default function TradingTerminal() {
           </div>
 
           <div className="bottom-tabs">
-            {["Pine Editor", "Strategy Tester", "Trading Panel"].map((tab) => <button key={tab} className={activeTab === tab ? "bottom-tab active" : "bottom-tab"} onClick={() => setActiveTab(tab)}>{tab}</button>}
+            {["Pine Editor", "Strategy Tester", "Trading Panel"].map((tab) => <button key={tab} className={activeTab === tab ? "bottom-tab active" : "bottom-tab"} onClick={() => setActiveTab(tab)}>{tab}</button>)}
           </div>
         </section>
 
