@@ -1,172 +1,47 @@
-# ChartMasters MT5 Trading Dashboard
+# ChartMasters Terminal
 
-اکسپرت یکپارچه و ماژولار برای **MetaTrader 5** که چهار پنل مستقل را روی یک نمودار نمایش می‌دهد:
+A TradingView-inspired cryptocurrency charting workspace built with Next.js, TypeScript, Lightweight Charts and Lucide icons.
 
-1. **مدیریت سرمایه** — محاسبه ریسک، حجم، سفارش‌ها و مدیریت پوزیشن
-2. **ابزارهای معاملاتی** — ابزارهای ترسیمی و مدیریت آبجکت‌های نمودار
-3. **سشن‌ها و اخبار** — سیدنی، توکیو، لندن، نیویورک و تقویم اقتصادی فارسی
-4. **یادداشت و چک‌لیست** — ثبت یادداشت و کنترل مراحل پیش از ورود به معامله
+## Current stage
 
-شمارش معکوس بسته‌شدن کندل نیز داخل پنل «سشن‌ها و اخبار» نمایش داده می‌شود و پنل پنجم جداگانه‌ای ایجاد نمی‌کند.
+This branch replaces the previous MT5/MQL5 prototype with a web application foundation.
 
-> **وضعیت:** نسخه یکپارچه اولیه در Branch توسعه قرار دارد. پیش از استفاده روی حساب واقعی، باید در MetaEditor کامپایل و روی حساب دمو آزمایش شود.
+- Trading terminal UI shell
+- Responsive chart workspace
+- Lightweight Charts candlestick chart
+- Symbol and timeframe selection
+- Binance Spot REST history and live WebSocket candles
+- Paginated older candle history
+- Persistent trend line, rectangle and Fibonacci drawings
+- EMA 20 / 50 / 200, RSI 14 and MACD 12 / 26 / 9 indicators
+- Watchlist and drawing toolbar
+- Pine Script v5 subset interpreter with an in-terminal editor and chart plots
 
-## ساختار فایل‌ها
+## Not connected yet
 
-```text
-Trading-risk/
-├── TradingDashboard.mq5
-├── Modules/
-│   ├── DrawPanelPro.mqh
-│   ├── SessionsNewsPanel.mqh
-│   ├── CandleCloseCountdown.mqh
-│   └── NotesChecklistPanel.mqh
-├── Smart_Money_Manager (2).mq5
-├── DrawPanelPro.mq5
-└── CandleCloseCountdown.mq5
+- Persistent cloud workspaces and cross-device drawing sync
+- Authentication and subscriptions
+- Alert delivery and strategy testing
+
+## Pine Script support
+
+Open the **Pine** toolbar button or the **Pine Editor** bottom tab, edit the script, and select **Add to chart** (Ctrl+Enter). The editor draft and last-applied script are saved separately in browser storage. Supported syntax includes `indicator()`, `plot()`, `hline()`, common `input.*` defaults, `ta.*` and `math.*` helpers, series history, variables, conditionals, loops, tuples, and user-defined functions.
+
+This is a compatibility subset, not the complete TradingView Pine runtime. Strategies and backtesting, drawing objects, `request.*`, and interactive input controls are not implemented yet. Scripts run locally in a bounded interpreter without `eval` or network access.
+
+## Getting started
+
+```bash
+npm install
+npm run dev
 ```
 
-فایل‌های داخل پوشه `Modules` نسخه‌های ماژولار و قابل استفاده در اکسپرت هستند. سه فایل اصلی کنار آن‌ها نسخه‌های منبع/اولیه‌اند و برای حفظ نسخه اولیه در مخزن باقی مانده‌اند.
+Open http://localhost:3000.
 
-## پنل‌ها
+## Next milestone
 
-### 1. مدیریت سرمایه — Risk Management
+Expand the technical analysis toolkit with configurable studies, then add chart alerts and synchronized user workspaces. Keep market-data providers separate from chart rendering so additional exchanges can be added later.
 
-پایه این پنل از اکسپرت موجود `Smart_Money_Manager (2).mq5` گرفته شده است. منطق اصلی مدیریت سرمایه و معامله تا حد امکان حفظ شده است.
+## Licensing note
 
-قابلیت‌های موجود در کد پایه:
-
-- محاسبه حجم بر اساس درصد ریسک یا لات ثابت
-- محاسبه ریسک، سود احتمالی و نسبت ریسک به بازده
-- سفارش‌های Market و Pending
-- ابزار چارت برای جابه‌جایی Entry، SL و TP
-- Break Even و Trailing Stop
-- بستن کامل، بستن بخشی، بستن معاملات سودده/زیان‌ده و حذف سفارش‌های معلق
-- محدودیت ضرر روزانه، هدف سود روزانه، افت سرمایه، تعداد معاملات و ریسک باز
-- فیلتر ساعت، اسپرد و اخبار
-
-این پنل چهار تب داخلی دارد: Account، Setup، Trade و Manage. این تب‌ها فقط نمای داخلی پنل مدیریت سرمایه‌اند؛ چهار پنل اصلی داشبورد مستقل هستند.
-
-### 2. ابزارهای معاملاتی — DrawPanelPro
-
-ماژول `Modules/DrawPanelPro.mqh` از کد `DrawPanelPro.mq5` استخراج شده است.
-
-قابلیت‌های اصلی کد منبع شامل ابزارهای ترسیمی، خطوط و نواحی، فیبوناچی، Premium/Discount، ابزار Long/Short، نوار ویرایش، فهرست آبجکت‌ها و Undo/Redo است.
-
-نام‌گذاری آبجکت‌ها و منطق اصلی ابزار حفظ شده‌اند. چرخه رویداد و تایمر مستقل اندیکاتور حذف و به اکسپرت مرکزی متصل شده است.
-
-### 3. سشن‌ها و اخبار — Sessions & News
-
-ماژول `Modules/SessionsNewsPanel.mqh` شامل موارد زیر است:
-
-- وضعیت سشن‌های Sydney، Tokyo، London و New York
-- زمان باقی‌مانده تا شروع یا پایان هر سشن
-- محاسبه ساعت سشن‌ها با UTC و قواعد تغییر ساعت تابستانی (DST)
-- تقویم اقتصادی داخلی MQL5
-- ارز مرتبط، زمان و درجه اهمیت خبر
-- مقدار واقعی (Actual)، پیش‌بینی (Forecast) و مقدار قبلی (Previous) در صورت موجود بودن
-- نگه‌داشتن خبرهای منتشرشده در دو ساعت اخیر برای نمایش مقدار واقعی
-- واژه‌نامه فارسی برای رویدادهای پرتکرار اقتصادی
-- تیترهای خبری GDELT در صورت فعال بودن دریافت تیترها
-
-**فارسی‌سازی:** عنوان رویدادهای متداول در واژه‌نامه ترجمه می‌شوند. عنوان ناشناخته به زبان اصلی باقی می‌ماند تا ترجمه نادرست نمایش داده نشود.
-
-**تقویم MQL5:** دریافت داده به اتصال ترمینال و پشتیبانی تقویم اقتصادی در محیط بروکر وابسته است. زمان رویدادهای تقویم بر اساس زمان سرور معاملاتی گزارش می‌شود.
-
-**تیترهای GDELT:** برای استفاده از این بخش، آدرس زیر باید در تنظیمات MT5 و قسمت Expert Advisors در فهرست مجاز WebRequest باشد:
-
-`https://api.gdeltproject.org`
-
-این تیترها خبر عمومی هستند و با رویدادهای زمان‌بندی‌شده تقویم اقتصادی یکی نیستند.
-
-### 4. شمارش معکوس کندل — Candle Close Countdown
-
-ماژول `Modules/CandleCloseCountdown.mqh` از اندیکاتور `CandleCloseCountdown.mq5` استخراج شده است.
-
-- تایم‌فریم جاری نمودار را نمایش می‌دهد.
-- زمان باقی‌مانده تا بسته‌شدن کندل را به‌روزرسانی می‌کند.
-- ساعت را با زمان آخرین کوتیشن بروکر همگام می‌کند.
-- هنگام بسته‌بودن بازار یا قدیمی‌شدن داده قیمت، وضعیت مناسب را نمایش می‌دهد.
-- داخل پنل سشن‌ها و اخبار قرار گرفته است؛ پنل جداگانه‌ای نمی‌سازد.
-
-### 5. یادداشت و چک‌لیست — Notes & Checklist
-
-ماژول `Modules/NotesChecklistPanel.mqh` شامل:
-
-- ثبت و ذخیره یادداشت معاملاتی
-- بازیابی یادداشت پس از اجرای دوباره ترمینال
-- شش مرحله چک‌لیست پیش از ورود
-- علامت‌گذاری و بازنشانی چک‌لیست
-- نمایش تعداد موارد تکمیل‌شده
-
-اطلاعات به‌صورت محلی در پوشه مشترک داده‌های ترمینال MT5 ذخیره می‌شود. نام فایل ذخیره‌سازی با شناسه حساب و نماد معاملاتی ساخته می‌شود؛ بنابراین یادداشت‌ها برای همان حساب و نماد بازیابی می‌شوند.
-
-## معماری رویدادها و تایمر
-
-اکسپرت یک چرخه رویداد مرکزی دارد:
-
-- یک `OnInit`
-- یک `OnDeinit`
-- یک `OnTick`
-- یک `OnTimer`
-- یک `OnChartEvent`
-- یک `OnTradeTransaction`
-
-ماژول‌ها توابع داخلی مخصوص خود را دارند و رویدادها از اکسپرت اصلی به آن‌ها هدایت می‌شوند. فقط اکسپرت اصلی تایمر میلی‌ثانیه‌ای را راه‌اندازی می‌کند؛ ماژول‌ها تایمر مستقل ایجاد نمی‌کنند.
-
-این ساختار برای جلوگیری از تداخل چند اندیکاتور مستقل که هرکدام چرخه رویداد و تایمر خود را دارند استفاده شده است.
-
-## نصب و کامپایل
-
-1. در MT5 از مسیر **File → Open Data Folder** پوشه داده ترمینال را باز کن.
-2. وارد `MQL5/Experts` شو و پوشه‌ای به نام `TradingDashboard` بساز.
-3. فایل `TradingDashboard.mq5` و پوشه کامل `Modules` را در آن قرار بده.
-4. فایل `TradingDashboard.mq5` را با MetaEditor باز کن.
-5. آن را Compile کن و خطاها و هشدارهای کامپایل را بررسی کن.
-6. اکسپرت را ابتدا روی یک نمودار و حساب دمو اجرا کن.
-
-ساختار موردنیاز:
-
-```text
-MQL5/Experts/TradingDashboard/
-├── TradingDashboard.mq5
-└── Modules/
-    ├── DrawPanelPro.mqh
-    ├── SessionsNewsPanel.mqh
-    ├── CandleCloseCountdown.mqh
-    └── NotesChecklistPanel.mqh
-```
-
-## نقشه راه تست و تکمیل
-
-- [x] بررسی فایل مدیریت سرمایه موجود
-- [x] انتقال DrawPanelPro به ماژول قابل استفاده در اکسپرت
-- [x] انتقال شمارش معکوس کندل به ماژول داخلی
-- [x] ساخت پنل سشن‌ها و اخبار
-- [x] ساخت پنل یادداشت و چک‌لیست
-- [x] اتصال ماژول‌ها به رویداد و تایمر مرکزی
-- [x] افزودن Actual / Forecast / Previous به پنل اخبار
-- [ ] کامپایل نهایی در MetaEditor
-- [ ] رفع خطاها و هشدارهای کامپایل
-- [ ] تست تعامل پنل‌ها و ابزارهای ترسیمی روی چارت
-- [ ] بررسی ساعت سشن‌ها در زمان تغییر DST
-- [ ] بررسی تقویم اقتصادی و تیترهای خبری در ترمینال بروکر
-- [ ] تست ذخیره و بازیابی یادداشت و چک‌لیست
-- [ ] تست کامل روی حساب دمو
-- [ ] بازبینی و تأیید نسخه نهایی
-
-## قوانین توسعه
-
-- فایل‌های منبع اولیه تا حد امکان بدون تغییر نگهداری شوند.
-- تغییرات توسعه در Branch جداگانه انجام شوند.
-- `main` بدون تأیید صریح توسعه‌دهنده تغییر نکند.
-- هیچ Pull Request بدون تأیید صریح Merge نشود.
-- هیچ نسخه‌ای بدون تأیید صریح منتشر نشود.
-- قابلیت‌های مدیریت سرمایه یا ابزارهای ترسیمی بدون دلیل و بررسی حذف نشوند.
-- نتیجه کامپایل و تست باید صادقانه گزارش شود؛ بررسی ایستای کد جایگزین کامپایل واقعی MetaEditor نیست.
-
-## فایل‌ها و Branch فعلی
-
-- فایل ورودی اکسپرت: `TradingDashboard.mq5`
-- Branch توسعه: `feat/mt5-unified-dashboard`
-- Branch اصلی: `main` (در این مرحله دست‌نخورده باقی می‌ماند)
+This project uses Lightweight Charts under its Apache 2.0 license. It does not bundle TradingView Advanced Charts or proprietary TradingView UI assets.
