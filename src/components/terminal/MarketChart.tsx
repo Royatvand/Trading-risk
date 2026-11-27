@@ -315,7 +315,7 @@ export default function MarketChart({
 
       emaSeriesRef.current[period] = series;
       series.setData(calculateEMA(candles, period).map((point) => ({
-        time: toChartTime(point.time),
+        time: point.time as UTCTimestamp,
         value: point.value,
       })));
     }
@@ -406,7 +406,7 @@ export default function MarketChart({
 
       const rsiData = calculateRSI(candles);
       rsi.setData(rsiData.map((point) => ({
-        time: toChartTime(point.time),
+        time: point.time as UTCTimestamp,
         value: point.value,
       })));
       const upperData = candles.map((candle) => ({
@@ -428,19 +428,19 @@ export default function MarketChart({
 
     const values = calculateMACD(candles);
     macd.setData(values.macd.map((point) => ({
-      time: toChartTime(point.time),
+      time: point.time as UTCTimestamp,
       value: point.value,
     })));
     signal.setData(values.signal.map((point) => ({
-      time: toChartTime(point.time),
+      time: point.time as UTCTimestamp,
       value: point.value,
     })));
     zero.setData(values.histogram.map((point) => ({
-      time: toChartTime(point.time),
+      time: point.time as UTCTimestamp,
       value: 0,
     })));
     histogram.setData(values.histogram.map((point) => ({
-      time: toChartTime(point.time),
+      time: point.time as UTCTimestamp,
       value: point.value,
       color: point.value >= 0 ? "rgba(14, 203, 129, 0.52)" : "rgba(246, 70, 93, 0.52)",
     })));
