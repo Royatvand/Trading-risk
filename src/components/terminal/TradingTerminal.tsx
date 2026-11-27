@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown,
-  ChevronLeft, CircleHelp, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
+  ChevronLeft, CircleHelp, Code2, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
   MoreHorizontal, MousePointer2, Plus, Search, Settings2, SlidersHorizontal,
   Square, Star, Trash2, TrendingUp, Undo2, Redo2, Waves, X
 } from "lucide-react";
 import MarketChart from "./MarketChart";
+import PineEditorPanel from "./PineEditorPanel";
+import { DEFAULT_PINE_SOURCE, runPine } from "@/features/pine";
 import { useBinanceMarket } from "@/features/market-data/useBinanceMarket";
 import { useBinanceWatchlist } from "@/features/market-data/useBinanceWatchlist";
 import type { ChartInterval, Ticker24h } from "@/features/market-data/types";
@@ -24,6 +26,9 @@ const symbols = [
   { symbol: "ADAUSDT", name: "Cardano" },
   { symbol: "DOGEUSDT", name: "Dogecoin" },
 ];
+
+const PINE_STORAGE_KEY = "chartmasters:pine:source";
+const PINE_APPLIED_KEY = "chartmasters:pine:applied";
 
 const timeframes: ChartInterval[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"];
 
@@ -81,6 +86,33 @@ export default function TradingTerminal() {
   const [indicatorMenuOpen, setIndicatorMenuOpen] = useState(false);
   const [enabledEma, setEnabledEma] = useState<EmaPeriod[]>([]);
   const [activeOscillator, setActiveOscillator] = useState<OscillatorType>("none");
+  const [pineSource, setPineSource] = useState(DEFAULT_PINE_SOURCE);
+  const [pineActive, setPineActive] = useState<string | null>(null);
+  const [pineLoaded, setPineLoaded] = useState(false);
+
+  // Restore the saved script after hydration (localStorage is not available on the server).
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(PINE_STORAGE_KEY);
+      if (saved) setPineSource(saved);
+      if (window.localStorage.getItem(PINE_APPLIED_KEY) === "1") {
+        setPineActive(saved || DEFAULT_PINE_SOURCE);
+      }
+    } catch {
+      // Storage can be unavailable (private mode); the editor still works for this session.
+    }
+    setPineLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!pineLoaded) return;
+    try {
+      window.localStorage.setItem(PINE_STORAGE_KEY, pineSource);
+      window.localStorage.setItem(PINE_APPLIED_KEY, pineActive === null ? "0" : "1");
+    } catch {
+      // ignore
+    }
+  }, [pineLoaded, pineSource, pineActive]);
 
   const toggleEma = (period: EmaPeriod, enabled: boolean) => {
     setEnabledEma((current) => enabled
@@ -99,6 +131,11 @@ export default function TradingTerminal() {
     loadOlderCandles,
   } = useBinanceMarket(symbol, timeframe);
   const { tickers, error: tickerError } = useBinanceWatchlist(symbols.map((item) => item.symbol));
+
+  const pineResult = useMemo(
+    () => (pineActive === null ? null : runPine(pineActive, candles, { symbol, timeframe })),
+    [pineActive, candles, symbol, timeframe]
+  );
 
   const selected = symbols.find((item) => item.symbol === symbol) ?? symbols[0];
   const selectedTicker: Ticker24h | undefined = tickers[symbol];
@@ -220,6 +257,13 @@ export default function TradingTerminal() {
             </div>
           )}
         </div>
+        <button
+          className={"toolbar-action" + (activeTab === "Pine Editor" ? " active" : "")}
+          onClick={() => setActiveTab((tab) => (tab === "Pine Editor" ? "Trading Panel" : "Pine Editor"))}
+          title="Pine Script editor"
+        >
+          <Code2 size={15} /> Pine
+        </button>
         <button className="toolbar-icon optional" title="Alert"><Bell size={16} /></button>
         <button className="toolbar-action optional"><Clock3 size={15} /> Replay</button>
         <div className="toolbar-spacer" />
@@ -304,6 +348,7 @@ export default function TradingTerminal() {
               activeTool={activeTool}
               enabledEma={enabledEma}
               activeOscillator={activeOscillator}
+              pineResult={pineResult}
               drawingsVisible={drawingsVisible}
               clearDrawingsSignal={clearDrawingsSignal}
               onLoadOlder={loadOlderCandles}
@@ -334,14 +379,31 @@ export default function TradingTerminal() {
               ))}
               {activeOscillator === "rsi" && <span className="indicator-chip rsi-chip">RSI 14</span>}
               {activeOscillator === "macd" && <span className="indicator-chip macd-chip">MACD 12 / 26 / 9</span>}
-              {enabledEma.length === 0 && activeOscillator === "none" && (
+              {pineResult && pineResult.errors.length === 0 && (
+                <span className="indicator-chip pine-chip">Pine · {pineResult.title}</span>
+              )}
+              {pineResult && pineResult.errors.length > 0 && (
+                <span className="indicator-chip pine-chip error">Pine error</span>
+              )}
+              {enabledEma.length === 0 && activeOscillator === "none" && !pineResult && (
                 <span className="muted">No indicators</span>
               )}
             </div>
           </div>
 
+          {activeTab === "Pine Editor" && (
+            <PineEditorPanel
+              source={pineSource}
+              onSourceChange={setPineSource}
+              onRun={() => setPineActive(pineSource)}
+              onRemove={() => setPineActive(null)}
+              applied={pineActive !== null}
+              result={pineResult}
+            />
+          )}
+
           <div className="bottom-tabs">
-            {["Pine Editor", "Strategy Tester", "Trading Panel"].map((tab) => <button key={tab} className={activeTab === tab ? "bottom-tab active" : "bottom-tab"} onClick={() => setActiveTab(tab)}>{tab}</button>)}
+            {["Pine Editor", "Strategy Tester", "Trading Panel"].map((tab) => <button key={tab} className={activeTab === tab ? "bottom-tab active" : "bottom-tab"} onClick={() => setActiveTab(tab === activeTab && tab === "Pine Editor" ? "Trading Panel" : tab)}>{tab}</button>)}
           </div>
         </section>
 
