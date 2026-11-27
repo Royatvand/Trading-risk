@@ -487,3 +487,45 @@ html, body { background: #131722; color: #d1d4dc; }
   .pine-output { border-left: 0; border-top: 1px solid #2a2e39; flex-basis: 35%; }
   .pine-select { max-width: 110px; }
 }
+
+/* Reference recreation: classic TradingView dark chart layout */
+:root { --bg:#131722; --panel:#131722; --panel-2:#1e222d; --border:#2a2e39; --muted:#787b86; --text:#d1d4dc; }
+html,body,.terminal-shell,.chart-column { background:#131722 !important; color:#d1d4dc; }
+.topbar,.toolbar,.drawing-toolbar,.right-toolbar { background:#131722 !important; border-color:#2a2e39 !important; }
+.topbar { gap:12px; }
+.brand { display:none; }
+.toolbar { gap:4px; padding:0 8px; }
+.toolbar-action,.menu-item { color:#b2b5be; }
+.drawing-toolbar { width:48px; flex-basis:48px; gap:3px; padding:5px 6px; }
+.tool-button { width:36px; height:35px; border-radius:4px; color:#8b909c; }
+.tool-button:hover,.tool-button.active { background:#2a2e39; color:#d1d4dc; }
+.tool-button.active { box-shadow:inset 2px 0 #2962ff; }
+.tool-separator { background:#2a2e39; }
+.chart-heading { min-height:54px; padding:8px 10px; gap:12px; background:#131722; border-bottom:0; }
+.instrument-name { font-size:14px; font-weight:500; }
+.instrument-subtitle { color:#787b86; }
+.chart-status-row { background:#131722; border-color:#2a2e39; }
+.chart-rangebar { background:#131722; border-color:#2a2e39; height:32px; flex-basis:32px; }
+.range-presets { gap:10px; }
+.range-presets button { font-size:11px; }
+.right-toolbar { width:43px; flex-basis:43px; }
+.right-tool { width:35px; height:35px; }
+.watchlist-panel { background:#131722; border-color:#2a2e39; }
+.watchlist-header,.watchlist-tabs,.watchlist-columns { border-color:#2a2e39; }
+.watchlist-item.selected { background:rgba(41,98,255,.08); }
+@media(max-width:760px){.drawing-toolbar{width:39px;flex-basis:39px}.tool-button{width:31px;height:31px}.chart-heading{min-height:48px}}
+
+/* Reference pass: compact TradingView drawing rail and chart chrome */
+.drawing-toolbar { overflow-y:auto; overflow-x:hidden; scrollbar-width:none; align-items:center; }
+.drawing-toolbar::-webkit-scrollbar { display:none; }
+.tool-button { flex:0 0 35px; width:35px; height:35px; display:grid; place-items:center; padding:0; border:0; background:transparent; color:#787b86; }
+.tool-button svg { width:18px; height:18px; stroke-width:1.65; }
+.tool-button:hover { background:#2a2e39; color:#d1d4dc; }
+.tool-button.active { background:rgba(41,98,255,.13); color:#82b1ff; box-shadow:inset 2px 0 #2962ff; }
+.tool-separator { width:24px; height:1px; margin:5px auto; background:#2a2e39; flex:0 0 auto; }
+.toolbar-icon,.icon-action { border-radius:4px; color:#9598a3; }
+.toolbar-icon:hover,.icon-action:hover { background:#2a2e39; color:#d1d4dc; }
+.chart-wrap { background:#131722; }
+.chart-watermark { opacity:.10; }
+.chart-status-row,.chart-heading { color:#d1d4dc; }
+@media(max-width:760px){ .drawing-toolbar { width:38px;flex-basis:38px;padding:4px 3px; } .tool-button{flex-basis:32px;width:32px;height:32px;} }
