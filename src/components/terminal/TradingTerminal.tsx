@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown,
+  Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown, Brush, Pencil, Type, Smile, Ruler, ZoomIn, Magnet, Lock, Layers, EyeOff,
   ChevronLeft, CircleHelp, Code2, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
   MoreHorizontal, MousePointer2, Plus, Search, Settings2, SlidersHorizontal,
   Square, Star, Trash2, TrendingUp, Undo2, Redo2, Waves, X
@@ -274,27 +274,27 @@ export default function TradingTerminal() {
       </section>
 
       <div className="workspace">
-        <aside className="drawing-toolbar">
-          <ToolButton icon={MousePointer2} label="Cursor" active={activeTool === "cursor"} onClick={() => setActiveTool("cursor")} />
+        <aside className="drawing-toolbar" aria-label="Drawing tools">
           <ToolButton icon={Crosshair} label="Crosshair" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
+          <ToolButton icon={MousePointer2} label="Cursor" active={activeTool === "cursor"} onClick={() => setActiveTool("cursor")} />
           <div className="tool-separator" />
           <ToolButton icon={TrendingUp} label="Trend line" active={activeTool === "trend"} onClick={() => setActiveTool("trend")} />
-          <ToolButton icon={Square} label="Rectangle" active={activeTool === "rectangle"} onClick={() => setActiveTool("rectangle")} />
-          <ToolButton icon={Waves} label="Fibonacci" active={activeTool === "fibonacci"} onClick={() => setActiveTool("fibonacci")} />
+          <ToolButton icon={Layers} label="Parallel channel" active={false} />
+          <ToolButton icon={Ruler} label="Measure" />
           <div className="tool-separator" />
-          <div className="tool-spacer" />
-          <ToolButton
-            icon={Eye}
-            label={drawingsVisible ? "Hide drawings" : "Show drawings"}
-            active={!drawingsVisible}
-            onClick={() => setDrawingsVisible((visible) => !visible)}
-          />
-          <ToolButton
-            icon={Trash2}
-            label="Remove all drawings"
-            onClick={() => setClearDrawingsSignal((signal) => signal + 1)}
-          />
-          <ToolButton icon={Bookmark} label="Drawings auto-saved" active />
+          <ToolButton icon={Square} label="Rectangle" active={activeTool === "rectangle"} onClick={() => setActiveTool("rectangle")} />
+          <ToolButton icon={Waves} label="Fib retracement" active={activeTool === "fibonacci"} onClick={() => setActiveTool("fibonacci")} />
+          <ToolButton icon={Brush} label="Brush" />
+          <ToolButton icon={Pencil} label="Freehand drawing" />
+          <div className="tool-separator" />
+          <ToolButton icon={Type} label="Text" />
+          <ToolButton icon={Smile} label="Emoji / marker" />
+          <ToolButton icon={ZoomIn} label="Zoom" />
+          <ToolButton icon={Magnet} label="Magnet mode" />
+          <ToolButton icon={Lock} label="Lock drawings" />
+          <ToolButton icon={Eye} label={drawingsVisible ? "Hide drawings" : "Show drawings"} active={!drawingsVisible} onClick={() => setDrawingsVisible(v => !v)} />
+          <div className="tool-separator" />
+          <ToolButton icon={Trash2} label="Remove all drawings" onClick={() => setClearDrawingsSignal(s => s + 1)} />
         </aside>
 
         <section className="chart-column">
