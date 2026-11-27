@@ -161,3 +161,11 @@ button:focus-visible, input:focus-visible { outline: 1px solid #2ebd85; outline-
 .chart-empty-state { position: absolute; z-index: 3; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: #0b0e11; color: #cbd5df; pointer-events: none; text-align: center; padding: 24px; }
 .chart-empty-state strong { font-size: 13px; font-weight: 650; }
 .chart-empty-state span { color: #778493; font-size: 11px; max-width: 420px; }
+
+.chart-drawing-overlay { position: absolute; z-index: 3; inset: 0; overflow: visible; pointer-events: none; }
+.chart-drawing-overlay.drawing-active { pointer-events: auto; cursor: crosshair; touch-action: none; }
+.drawing-hint { position: absolute; z-index: 4; left: 12px; top: 32px; padding: 6px 9px; border: 1px solid #34483f; border-radius: 5px; background: rgba(15, 23, 21, .92); color: #8ee3be; font-size: 10px; pointer-events: none; }
+.history-loading, .history-error, .history-end { position: absolute; z-index: 4; left: 12px; bottom: 12px; padding: 5px 8px; border-radius: 4px; background: rgba(12, 17, 23, .88); color: #9aa7b5; font-size: 9px; letter-spacing: .5px; pointer-events: none; }
+.history-error { color: #f59b9b; }
+.history-end { color: #657281; }
+.legend-timeframe { color: #768494; font-size: 10px; }

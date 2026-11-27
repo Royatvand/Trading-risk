@@ -18,6 +18,11 @@ type RawTicker = {
   quoteVolume: string;
 };
 
+export type KlineRequestOptions = {
+  limit?: number;
+  endTime?: number;
+};
+
 export function toBinanceInterval(interval: ChartInterval): string {
   return intervalMap[interval];
 }
@@ -30,13 +35,20 @@ export function createKlineStreamUrl(symbol: string, interval: ChartInterval): s
 export async function fetchKlines(
   symbol: string,
   interval: ChartInterval,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options: KlineRequestOptions = {}
 ): Promise<MarketCandle[]> {
+  const limit = Math.min(1000, Math.max(1, options.limit ?? 500));
   const params = new URLSearchParams({
     symbol: symbol.toUpperCase(),
     interval: toBinanceInterval(interval),
-    limit: "500",
+    limit: String(limit),
   });
+
+  if (options.endTime !== undefined) {
+    params.set("endTime", String(options.endTime));
+  }
+
   const response = await fetch(REST_BASE_URL + "/api/v3/klines?" + params.toString(), {
     method: "GET",
     signal,
@@ -44,10 +56,14 @@ export async function fetchKlines(
     headers: { Accept: "application/json" },
   });
 
-  if (!response.ok) throw new Error("Binance history request failed (" + response.status + ")");
+  if (!response.ok) {
+    throw new Error("Binance history request failed (" + response.status + ")");
+  }
 
   const rows = (await response.json()) as RawKline[];
-  if (!Array.isArray(rows)) throw new Error("Unexpected response from Binance klines endpoint");
+  if (!Array.isArray(rows)) {
+    throw new Error("Unexpected response from Binance klines endpoint");
+  }
 
   return rows.map((row) => ({
     openTime: Number(row[0]),
@@ -80,10 +96,14 @@ export async function fetch24hTickers(
     headers: { Accept: "application/json" },
   });
 
-  if (!response.ok) throw new Error("Binance ticker request failed (" + response.status + ")");
+  if (!response.ok) {
+    throw new Error("Binance ticker request failed (" + response.status + ")");
+  }
 
   const rows = (await response.json()) as RawTicker[];
-  if (!Array.isArray(rows)) throw new Error("Unexpected response from Binance ticker endpoint");
+  if (!Array.isArray(rows)) {
+    throw new Error("Unexpected response from Binance ticker endpoint");
+  }
 
   return Object.fromEntries(rows.map((ticker) => [
     ticker.symbol,

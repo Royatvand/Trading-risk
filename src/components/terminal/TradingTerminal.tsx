@@ -4,14 +4,15 @@ import { useState } from "react";
 import {
   Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown,
   ChevronLeft, CircleHelp, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
-  MoreHorizontal, MousePointer2, Plus, Search, Settings2, Shapes,
-  SlidersHorizontal, Square, Star, Trash2, TrendingUp, Type, Undo2, Redo2,
-  Waves, X, ZoomIn, ZoomOut
+  MoreHorizontal, MousePointer2, Plus, Search, Settings2, SlidersHorizontal,
+  Square, Star, Trash2, TrendingUp, Undo2, Redo2, Waves, X
 } from "lucide-react";
 import MarketChart from "./MarketChart";
 import { useBinanceMarket } from "@/features/market-data/useBinanceMarket";
 import { useBinanceWatchlist } from "@/features/market-data/useBinanceWatchlist";
 import type { ChartInterval, Ticker24h } from "@/features/market-data/types";
+
+type DrawingTool = "cursor" | "crosshair" | "trend" | "rectangle" | "fibonacci";
 
 const symbols = [
   { symbol: "BTCUSDT", name: "Bitcoin" },
@@ -68,14 +69,24 @@ function ToolButton({ icon: Icon, label, active, onClick }: {
 export default function TradingTerminal() {
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [timeframe, setTimeframe] = useState<ChartInterval>("15m");
-  const [activeTool, setActiveTool] = useState("crosshair");
+  const [activeTool, setActiveTool] = useState<DrawingTool>("crosshair");
+  const [drawingsVisible, setDrawingsVisible] = useState(true);
+  const [clearDrawingsSignal, setClearDrawingsSignal] = useState(0);
   const [watchlistOpen, setWatchlistOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("Trading Panel");
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [favorite, setFavorite] = useState(true);
 
-  const { candles, status, error } = useBinanceMarket(symbol, timeframe);
+  const {
+    candles,
+    status,
+    error,
+    hasMoreOlder,
+    isLoadingOlder,
+    olderError,
+    loadOlderCandles,
+  } = useBinanceMarket(symbol, timeframe);
   const { tickers, error: tickerError } = useBinanceWatchlist(symbols.map((item) => item.symbol));
 
   const selected = symbols.find((item) => item.symbol === symbol) ?? symbols[0];
@@ -167,18 +178,22 @@ export default function TradingTerminal() {
           <ToolButton icon={Crosshair} label="Crosshair" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
           <div className="tool-separator" />
           <ToolButton icon={TrendingUp} label="Trend line" active={activeTool === "trend"} onClick={() => setActiveTool("trend")} />
-          <ToolButton icon={Shapes} label="Shapes" active={activeTool === "shapes"} onClick={() => setActiveTool("shapes")} />
           <ToolButton icon={Square} label="Rectangle" active={activeTool === "rectangle"} onClick={() => setActiveTool("rectangle")} />
           <ToolButton icon={Waves} label="Fibonacci" active={activeTool === "fibonacci"} onClick={() => setActiveTool("fibonacci")} />
-          <ToolButton icon={Type} label="Text" active={activeTool === "text"} onClick={() => setActiveTool("text")} />
           <div className="tool-separator" />
-          <ToolButton icon={RulerIcon} label="Measure" active={activeTool === "measure"} onClick={() => setActiveTool("measure")} />
-          <ToolButton icon={ZoomIn} label="Zoom in" />
-          <ToolButton icon={ZoomOut} label="Zoom out" />
           <div className="tool-spacer" />
-          <ToolButton icon={Eye} label="Hide drawings" />
-          <ToolButton icon={Trash2} label="Remove drawings" />
-          <ToolButton icon={Bookmark} label="Save drawing template" />
+          <ToolButton
+            icon={Eye}
+            label={drawingsVisible ? "Hide drawings" : "Show drawings"}
+            active={!drawingsVisible}
+            onClick={() => setDrawingsVisible((visible) => !visible)}
+          />
+          <ToolButton
+            icon={Trash2}
+            label="Remove all drawings"
+            onClick={() => setClearDrawingsSignal((signal) => signal + 1)}
+          />
+          <ToolButton icon={Bookmark} label="Drawings auto-saved" active />
         </aside>
 
         <section className="chart-column">
@@ -210,6 +225,7 @@ export default function TradingTerminal() {
               <span className="legend-symbol">{symbol}</span>
               <span className="legend-timeframe">{timeframe}</span>
               <span className={changeClass(selectedTicker?.priceChangePercent)}>{formatChange(selectedTicker?.priceChangePercent)} (24h)</span>
+              <span className="legend-timeframe">{candles.length.toLocaleString("en-US")} candles</span>
             </div>
             <div className="chart-status-actions">
               <button title="Compare"><ArrowLeftRight size={15} /></button>
@@ -221,7 +237,21 @@ export default function TradingTerminal() {
 
           <div className="chart-wrap">
             <div className="chart-watermark"><span>CM</span><strong>CHARTMASTERS</strong><small>MARKET ANALYSIS</small></div>
-            <MarketChart key={symbol + ":" + timeframe} symbol={symbol} timeframe={timeframe} candles={candles} status={status} error={error} />
+            <MarketChart
+              key={symbol + ":" + timeframe}
+              symbol={symbol}
+              timeframe={timeframe}
+              candles={candles}
+              status={status}
+              error={error}
+              activeTool={activeTool}
+              drawingsVisible={drawingsVisible}
+              clearDrawingsSignal={clearDrawingsSignal}
+              onLoadOlder={loadOlderCandles}
+              isLoadingOlder={isLoadingOlder}
+              hasMoreOlder={hasMoreOlder}
+              olderError={olderError}
+            />
             <div className="chart-disclaimer">{statusLabel}{error ? " · " + error : ""}</div>
           </div>
 
@@ -286,6 +316,3 @@ export default function TradingTerminal() {
   );
 }
 
-function RulerIcon({ size = 17 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m3 16 13-13 5 5L8 21z"/><path d="m14 5 5 5M11 8l2 2M8 11l2 2M5 14l2 2"/></svg>;
-}
