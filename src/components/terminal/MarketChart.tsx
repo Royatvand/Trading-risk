@@ -7,53 +7,23 @@ import {
   createChart,
   HistogramSeries,
   type IChartApi,
+  type ISeriesApi,
   type UTCTimestamp,
 } from "lightweight-charts";
+import type { MarketCandle } from "@/features/market-data/types";
 
 type Props = {
   symbol: string;
   timeframe: string;
+  candles: MarketCandle[];
 };
 
-function seedFromText(value: string) {
-  return value.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
-}
-
-function makeCandles(symbol: string, timeframe: string) {
-  const now = Math.floor(Date.now() / 1000);
-  const intervalMap: Record<string, number> = {
-    "1m": 60, "5m": 300, "15m": 900, "30m": 1800,
-    "1h": 3600, "4h": 14400, "1D": 86400, "1W": 604800,
-  };
-  const interval = intervalMap[timeframe] ?? 900;
-  const seed = seedFromText(symbol + timeframe);
-  let previous = symbol.startsWith("ETH") ? 3200 : symbol.startsWith("SOL") ? 145 : 67400;
-  const candles = [];
-  const volumes = [];
-
-  for (let index = 180; index >= 0; index -= 1) {
-    const wave = Math.sin((index + seed) / 8) * previous * 0.0018;
-    const drift = Math.cos((index + seed) / 17) * previous * 0.0008;
-    const open = previous;
-    const close = Math.max(0.01, open + wave + drift);
-    const high = Math.max(open, close) + Math.abs(Math.sin(index + seed)) * previous * 0.0012;
-    const low = Math.min(open, close) - Math.abs(Math.cos(index + seed)) * previous * 0.0012;
-    const time = (Math.floor(now / interval) * interval - index * interval) as UTCTimestamp;
-    candles.push({ time, open, high, low, close });
-    volumes.push({
-      time,
-      value: 12 + Math.abs(Math.sin(index * 2.1 + seed)) * 85,
-      color: close >= open ? "rgba(38, 166, 154, 0.38)" : "rgba(239, 83, 80, 0.38)",
-    });
-    previous = close;
-  }
-
-  return { candles, volumes };
-}
-
-export default function MarketChart({ symbol, timeframe }: Props) {
+export default function MarketChart({ symbol, timeframe, candles }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const seededRef = useRef(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -78,7 +48,7 @@ export default function MarketChart({ symbol, timeframe }: Props) {
       },
       rightPriceScale: {
         borderColor: "#252b34",
-        scaleMargins: { top: 0.1, bottom: 0.2 },
+        scaleMargins: { top: 0.08, bottom: 0.2 },
       },
       timeScale: {
         borderColor: "#252b34",
@@ -114,11 +84,9 @@ export default function MarketChart({ symbol, timeframe }: Props) {
       scaleMargins: { top: 0.83, bottom: 0 },
     });
 
-    const { candles, volumes } = makeCandles(symbol, timeframe);
-    candleSeries.setData(candles);
-    volumeSeries.setData(volumes);
-    chart.timeScale().fitContent();
     chartRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+    volumeSeriesRef.current = volumeSeries;
 
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -135,8 +103,56 @@ export default function MarketChart({ symbol, timeframe }: Props) {
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    seededRef.current = false;
+    candleSeriesRef.current?.setData([]);
+    volumeSeriesRef.current?.setData([]);
   }, [symbol, timeframe]);
 
-  return <div ref={containerRef} className="chart-canvas" aria-label={symbol + " candlestick chart"} />;
+  useEffect(() => {
+    const candleSeries = candleSeriesRef.current;
+    const volumeSeries = volumeSeriesRef.current;
+    if (!candleSeries || !volumeSeries || candles.length === 0) return;
+
+    const toChartTime = (timestamp: number) => Math.floor(timestamp / 1000) as UTCTimestamp;
+    const latest = candles[candles.length - 1];
+
+    if (!seededRef.current) {
+      candleSeries.setData(candles.map((candle) => ({
+        time: toChartTime(candle.openTime),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      })));
+      volumeSeries.setData(candles.map((candle) => ({
+        time: toChartTime(candle.openTime),
+        value: candle.volume,
+        color: candle.close >= candle.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+      })));
+      chartRef.current?.timeScale().fitContent();
+      seededRef.current = true;
+      return;
+    }
+
+    candleSeries.update({
+      time: toChartTime(latest.openTime),
+      open: latest.open,
+      high: latest.high,
+      low: latest.low,
+      close: latest.close,
+    });
+    volumeSeries.update({
+      time: toChartTime(latest.openTime),
+      value: latest.volume,
+      color: latest.close >= latest.open ? "rgba(14, 203, 129, 0.34)" : "rgba(246, 70, 93, 0.34)",
+    });
+  }, [candles]);
+
+  return <div ref={containerRef} className="chart-canvas" aria-label={symbol + " " + timeframe + " Binance candlestick chart"} />;
 }

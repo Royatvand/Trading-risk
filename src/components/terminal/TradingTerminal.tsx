@@ -1,27 +1,56 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  Activity, AlertTriangle, ArrowDown, ArrowLeftRight, ArrowUpRight, Bell, Bookmark,
-  CandlestickChart, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock3, Crosshair, Download, Eye, FileText, Flag, Grid2X2, Layers3, LineChart,
-  Maximize2, Menu, Minus, MoreHorizontal, MousePointer2, Pencil, Plus, Search,
-  Settings2, Shapes, SlidersHorizontal, Square, Star, Trash2, TrendingUp, Type,
-  Undo2, Redo2, Waves, X, ZoomIn, ZoomOut
+  Activity, ArrowLeftRight, Bell, Bookmark, CandlestickChart, ChevronDown,
+  ChevronLeft, CircleHelp, Clock3, Crosshair, Eye, Grid2X2, Maximize2,
+  MoreHorizontal, MousePointer2, Plus, Search, Settings2, Shapes,
+  SlidersHorizontal, Square, Star, Trash2, TrendingUp, Type, Undo2, Redo2,
+  Waves, X, ZoomIn, ZoomOut
 } from "lucide-react";
 import MarketChart from "./MarketChart";
+import { useBinanceMarket } from "@/features/market-data/useBinanceMarket";
+import { useBinanceWatchlist } from "@/features/market-data/useBinanceWatchlist";
+import type { ChartInterval, Ticker24h } from "@/features/market-data/types";
 
 const symbols = [
-  { symbol: "BTCUSDT", name: "Bitcoin", price: "67,482.10", change: "+2.41%", positive: true },
-  { symbol: "ETHUSDT", name: "Ethereum", price: "3,521.84", change: "+1.82%", positive: true },
-  { symbol: "BNBUSDT", name: "BNB", price: "612.30", change: "-0.64%", positive: false },
-  { symbol: "SOLUSDT", name: "Solana", price: "148.62", change: "+4.18%", positive: true },
-  { symbol: "XRPUSDT", name: "XRP", price: "0.6241", change: "-1.12%", positive: false },
-  { symbol: "ADAUSDT", name: "Cardano", price: "0.4826", change: "+0.73%", positive: true },
-  { symbol: "DOGEUSDT", name: "Dogecoin", price: "0.1642", change: "+3.05%", positive: true },
+  { symbol: "BTCUSDT", name: "Bitcoin" },
+  { symbol: "ETHUSDT", name: "Ethereum" },
+  { symbol: "BNBUSDT", name: "BNB" },
+  { symbol: "SOLUSDT", name: "Solana" },
+  { symbol: "XRPUSDT", name: "XRP" },
+  { symbol: "ADAUSDT", name: "Cardano" },
+  { symbol: "DOGEUSDT", name: "Dogecoin" },
 ];
 
-const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"];
+const timeframes: ChartInterval[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"];
+
+function formatPrice(value?: number): string {
+  if (value === undefined || !Number.isFinite(value)) return "—";
+  const digits = value >= 100 ? 2 : value >= 1 ? 3 : 6;
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+}
+
+function formatCompact(value?: number): string {
+  if (value === undefined || !Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function changeClass(value?: number): string {
+  if (value === undefined || !Number.isFinite(value)) return "muted";
+  return value >= 0 ? "positive" : "negative";
+}
+
+function formatChange(value?: number): string {
+  if (value === undefined || !Number.isFinite(value)) return "—";
+  return (value > 0 ? "+" : "") + value.toFixed(2) + "%";
+}
 
 function ToolButton({ icon: Icon, label, active, onClick }: {
   icon: React.ElementType;
@@ -38,7 +67,7 @@ function ToolButton({ icon: Icon, label, active, onClick }: {
 
 export default function TradingTerminal() {
   const [symbol, setSymbol] = useState("BTCUSDT");
-  const [timeframe, setTimeframe] = useState("15m");
+  const [timeframe, setTimeframe] = useState<ChartInterval>("15m");
   const [activeTool, setActiveTool] = useState("crosshair");
   const [watchlistOpen, setWatchlistOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("Trading Panel");
@@ -46,10 +75,26 @@ export default function TradingTerminal() {
   const [query, setQuery] = useState("");
   const [favorite, setFavorite] = useState(true);
 
-  const selected = useMemo(() => symbols.find((item) => item.symbol === symbol) ?? symbols[0], [symbol]);
+  const { candles, status, error } = useBinanceMarket(symbol, timeframe);
+  const { tickers, error: tickerError } = useBinanceWatchlist(symbols.map((item) => item.symbol));
+
+  const selected = symbols.find((item) => item.symbol === symbol) ?? symbols[0];
+  const selectedTicker: Ticker24h | undefined = tickers[symbol];
+  const latestCandle = candles[candles.length - 1];
+  const lastPrice = selectedTicker?.lastPrice ?? latestCandle?.close;
   const filteredSymbols = symbols.filter((item) =>
     (item.symbol + item.name).toLowerCase().includes(query.toLowerCase())
   );
+
+  const statusLabel = status === "live"
+    ? "BINANCE SPOT · LIVE STREAM"
+    : status === "reconnecting"
+      ? "RECONNECTING TO BINANCE"
+      : status === "error"
+        ? "BINANCE CONNECTION ERROR"
+        : status === "loading"
+          ? "LOADING MARKET HISTORY"
+          : "CONNECTING TO BINANCE";
 
   return (
     <main className="terminal-shell">
@@ -82,13 +127,20 @@ export default function TradingTerminal() {
           </button>
           {searchOpen && (
             <div className="symbol-popover">
-              <div className="search-field"><Search size={15} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search markets..." /><button onClick={() => { setSearchOpen(false); setQuery(""); }}><X size={14} /></button></div>
-              {filteredSymbols.map((item) => (
-                <button key={item.symbol} className="symbol-result" onClick={() => { setSymbol(item.symbol); setSearchOpen(false); setQuery(""); }}>
-                  <span><strong>{item.symbol}</strong><small>{item.name}</small></span>
-                  <span className={item.positive ? "positive" : "negative"}>{item.price}</span>
-                </button>
-              ))}
+              <div className="search-field">
+                <Search size={15} />
+                <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search markets..." />
+                <button onClick={() => { setSearchOpen(false); setQuery(""); }}><X size={14} /></button>
+              </div>
+              {filteredSymbols.map((item) => {
+                const ticker = tickers[item.symbol];
+                return (
+                  <button key={item.symbol} className="symbol-result" onClick={() => { setSymbol(item.symbol); setSearchOpen(false); setQuery(""); }}>
+                    <span><strong>{item.symbol}</strong><small>{item.name}</small></span>
+                    <span className={changeClass(ticker?.priceChangePercent)}>{formatPrice(ticker?.lastPrice)}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -111,7 +163,7 @@ export default function TradingTerminal() {
 
       <div className="workspace">
         <aside className="drawing-toolbar">
-          <ToolButton icon={MousePointer2} label="Cursor" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
+          <ToolButton icon={MousePointer2} label="Cursor" active={activeTool === "cursor"} onClick={() => setActiveTool("cursor")} />
           <ToolButton icon={Crosshair} label="Crosshair" active={activeTool === "crosshair"} onClick={() => setActiveTool("crosshair")} />
           <div className="tool-separator" />
           <ToolButton icon={TrendingUp} label="Trend line" active={activeTool === "trend"} onClick={() => setActiveTool("trend")} />
@@ -133,31 +185,49 @@ export default function TradingTerminal() {
           <div className="chart-heading">
             <div className="instrument-title">
               <div className="coin-icon large">₿</div>
-              <div><div className="instrument-name">{symbol} <span className="market-tag">SPOT</span></div><div className="instrument-subtitle">Bitcoin / TetherUS · Binance</div></div>
+              <div>
+                <div className="instrument-name">{symbol} <span className="market-tag">SPOT</span></div>
+                <div className="instrument-subtitle">{selected.name} / TetherUS · Binance</div>
+              </div>
               <button className={"star-button" + (favorite ? " starred" : "")} onClick={() => setFavorite(!favorite)} title="Add to favorites"><Star size={16} fill={favorite ? "currentColor" : "none"} /></button>
             </div>
             <div className="quote-summary">
-              <div className="quote-price">{selected.price}</div>
-              <div className={selected.positive ? "positive" : "negative"}>{selected.change} <span>today</span></div>
+              <div className="quote-price">{formatPrice(lastPrice)}</div>
+              <div className={changeClass(selectedTicker?.priceChangePercent)}>
+                {formatChange(selectedTicker?.priceChangePercent)} <span>24h</span>
+              </div>
             </div>
-            <div className="ohlc-summary"><span>O <b>67,210.40</b></span><span>H <b>67,690.00</b></span><span>L <b>66,980.20</b></span><span>C <b>67,482.10</b></span></div>
+            <div className="ohlc-summary">
+              <span>O <b>{formatPrice(latestCandle?.open)}</b></span>
+              <span>H <b>{formatPrice(latestCandle?.high)}</b></span>
+              <span>L <b>{formatPrice(latestCandle?.low)}</b></span>
+              <span>C <b>{formatPrice(latestCandle?.close)}</b></span>
+            </div>
           </div>
 
           <div className="chart-status-row">
-            <div className="chart-legend"><span className="legend-symbol">{symbol}</span><span className="legend-timeframe">{timeframe}</span><span className="positive">+272.10 (+0.41%)</span></div>
-            <div className="chart-status-actions"><button title="Compare"><ArrowLeftRight size={15} /></button><button title="Indicators"><Activity size={15} /></button><button title="Settings"><SlidersHorizontal size={15} /></button><button title="More"><MoreHorizontal size={17} /></button></div>
+            <div className="chart-legend">
+              <span className="legend-symbol">{symbol}</span>
+              <span className="legend-timeframe">{timeframe}</span>
+              <span className={changeClass(selectedTicker?.priceChangePercent)}>{formatChange(selectedTicker?.priceChangePercent)} (24h)</span>
+            </div>
+            <div className="chart-status-actions">
+              <button title="Compare"><ArrowLeftRight size={15} /></button>
+              <button title="Indicators"><Activity size={15} /></button>
+              <button title="Settings"><SlidersHorizontal size={15} /></button>
+              <button title="More"><MoreHorizontal size={17} /></button>
+            </div>
           </div>
 
           <div className="chart-wrap">
             <div className="chart-watermark"><span>CM</span><strong>CHARTMASTERS</strong><small>MARKET ANALYSIS</small></div>
-            <MarketChart symbol={symbol} timeframe={timeframe} />
-            <div className="chart-disclaimer">DEMO DATA · BINANCE CONNECTION PENDING</div>
+            <MarketChart key={symbol + ":" + timeframe} symbol={symbol} timeframe={timeframe} candles={candles} />
+            <div className="chart-disclaimer">{statusLabel}{error ? " · " + error : ""}</div>
           </div>
 
           <div className="indicator-strip">
-            <div className="indicator-label">RSI (14) <span>52.48</span></div>
-            <div className="indicator-placeholder"><span>RSI</span><div className="rsi-line" /></div>
-            <div className="indicator-label">MACD (12, 26, 9) <span>12.40</span></div>
+            <div className="indicator-label">INDICATORS <span>Indicator calculations are the next milestone</span></div>
+            <div className="indicator-placeholder"><span>INDICATOR PANE</span></div>
           </div>
 
           <div className="bottom-tabs">
@@ -172,28 +242,44 @@ export default function TradingTerminal() {
             <div className="watchlist-header"><strong>Watchlist</strong><div><button title="Add symbol"><Plus size={16} /></button><button title="More"><MoreHorizontal size={17} /></button><button title="Close watchlist" onClick={() => setWatchlistOpen(false)}><X size={15} /></button></div></div>
             <div className="watchlist-columns"><span>Symbol</span><span>Last price</span><span>Chg%</span></div>
             <div className="watchlist-items">
-              {symbols.map((item) => (
-                <button key={item.symbol} className={symbol === item.symbol ? "watchlist-item selected" : "watchlist-item"} onClick={() => setSymbol(item.symbol)}>
-                  <span className="watch-symbol"><i className={"mini-coin " + item.symbol.slice(0, 3).toLowerCase()}>{item.symbol[0]}</i><span><b>{item.symbol.replace("USDT", "")}</b><small>USDT</small></span></span>
-                  <span className="watch-price">{item.price}</span>
-                  <span className={item.positive ? "positive watch-change" : "negative watch-change"}>{item.change}</span>
-                </button>
-              ))}
+              {symbols.map((item) => {
+                const ticker = tickers[item.symbol];
+                return (
+                  <button key={item.symbol} className={symbol === item.symbol ? "watchlist-item selected" : "watchlist-item"} onClick={() => setSymbol(item.symbol)}>
+                    <span className="watch-symbol">
+                      <i className={"mini-coin " + item.symbol.slice(0, 3).toLowerCase()}>{item.symbol[0]}</i>
+                      <span><b>{item.symbol.replace("USDT", "")}</b><small>USDT</small></span>
+                    </span>
+                    <span className="watch-price">{formatPrice(ticker?.lastPrice)}</span>
+                    <span className={changeClass(ticker?.priceChangePercent) + " watch-change"}>{formatChange(ticker?.priceChangePercent)}</span>
+                  </button>
+                );
+              })}
             </div>
             <div className="instrument-card">
               <div className="instrument-card-title"><span>{selected.symbol}</span><button><MoreHorizontal size={16} /></button></div>
-              <div className="instrument-card-price">{selected.price}</div>
-              <div className={selected.positive ? "positive" : "negative"}>{selected.change} <span className="muted">24h</span></div>
-              <div className="instrument-stats"><div><small>24h High</small><b>68,120.00</b></div><div><small>24h Low</small><b>66,240.00</b></div><div><small>24h Volume</small><b>1.24B USDT</b></div><div><small>Market</small><b>Spot</b></div></div>
+              <div className="instrument-card-price">{formatPrice(lastPrice)}</div>
+              <div className={changeClass(selectedTicker?.priceChangePercent)}>
+                {formatChange(selectedTicker?.priceChangePercent)} <span className="muted">24h</span>
+              </div>
+              <div className="instrument-stats">
+                <div><small>24h High</small><b>{formatPrice(selectedTicker?.highPrice)}</b></div>
+                <div><small>24h Low</small><b>{formatPrice(selectedTicker?.lowPrice)}</b></div>
+                <div><small>24h Volume</small><b>{formatCompact(selectedTicker?.quoteVolume)} USDT</b></div>
+                <div><small>Market</small><b>Spot</b></div>
+              </div>
             </div>
-            <div className="watchlist-footer"><span className="connection-dot" /> Demo workspace</div>
+            <div className="watchlist-footer"><span className={tickerError ? "connection-dot warning" : "connection-dot"} /> Binance Spot · 24h stats refresh every 15s</div>
           </aside>
         )}
         {!watchlistOpen && <button className="show-watchlist" onClick={() => setWatchlistOpen(true)} title="Show watchlist"><ChevronLeft size={16} /></button>}
       </div>
 
       <footer className="statusbar">
-        <div className="status-left"><span><span className="connection-dot" /> SIMULATED MARKET</span><span>UTC 14:32:08</span><span>ChartMasters Terminal</span></div>
+        <div className="status-left">
+          <span><span className={status === "live" ? "connection-dot live" : "connection-dot"} /> {statusLabel}</span>
+          <span>ChartMasters Terminal</span>
+        </div>
         <div className="status-right"><button><CircleHelp size={14} /> Help</button><span>© ChartMasters</span></div>
       </footer>
     </main>
